@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz IA</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+    margin: 0;
+}
+
+.container {
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+}
+
+.card {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+}
+
+button {
+    width: 100%;
+    padding: 15px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.secondary {
+    background: #475569;
+    color: white;
+}
+
+.answer {
+    background: #334155;
+}
+
+.correct {
+    background: #16a34a;
+}
+
+.wrong {
+    background: #dc2626;
+}
+
+.hidden {
+    display: none;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    margin-top: 10px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- HOME -->
+<div id="home">
+    <div class="card">
+        <h1>🎯 Quiz de Eliminação</h1>
+        <button class="primary" onclick="goConfig()">Novo jogo</button>
+    </div>
+</div>
+
+<!-- CONFIG -->
+<div id="config" class="hidden">
+    <div class="card">
+        <h2>Configuração</h2>
+
+        <select id="tema">
+            <option>História</option>
+            <option>Ciência</option>
+            <option>Direito</option>
+        </select>
+
+        <input id="subtema" placeholder="Subtema (ex: Segunda Guerra)">
+
+        <select id="nivel">
+            <option>Médio</option>
+            <option>Difícil</option>
+        </select>
+
+        <button class="primary" onclick="goPlayers()">Continuar</button>
+    </div>
+</div>
+
+<!-- PLAYERS -->
+<div id="players" class="hidden">
+    <div class="card">
+        <h2>Jogadores</h2>
+
+        <input id="playerName" placeholder="Nome do jogador">
+        <button class="secondary" onclick="addPlayer()">Adicionar</button>
+
+        <ul id="playerList"></ul>
+
+        <button class="primary" onclick="startGame()">Começar</button>
+    </div>
+</div>
+
+<!-- GAME -->
+<div id="game" class="hidden">
+    <div class="card">
+        <h2 id="question">Pergunta...</h2>
+
+        <div id="answers"></div>
+
+        <button class="secondary" onclick="showAnswer()">Mostrar resposta</button>
+    </div>
+
+    <div class="card">
+        <h3>Eliminar jogadores</h3>
+        <div id="elimination"></div>
+        <button class="primary" onclick="eliminate()">Eliminar</button>
+    </div>
+</div>
+
+<!-- WINNER -->
+<div id="winner" class="hidden">
+    <div class="card">
+        <h1 id="winnerName">🏆 Vencedor</h1>
+        <button class="primary" onclick="location.reload()">Novo jogo</button>
+    </div>
+</div>
+
+</div>
+
+<script>
+let players = [];
+let correctIndex = 0;
+
+function show(id){
+    ["home","config","players","game","winner"].forEach(s=>{
+        document.getElementById(s).classList.add("hidden");
+    });
+    document.getElementById(id).classList.remove("hidden");
+}
+
+function goConfig(){ show("config"); }
+function goPlayers(){ show("players"); }
+
+function addPlayer(){
+    let name = document.getElementById("playerName").value;
+    if(!name) return;
+    players.push(name);
+    renderPlayers();
+}
+
+function renderPlayers(){
+    let list = document.getElementById("playerList");
+    list.innerHTML = players.map(p=>"<li>"+p+"</li>").join("");
+}
+
+function startGame(){
+    show("game");
+    generateQuestion();
+}
+
+async function generateQuestion(){
+    const res = await fetch("/api/generate-question", {method:"POST"});
+    const data = await res.json();
+
+    document.getElementById("question").innerText = data.question;
+
+    const answersDiv = document.getElementById("answers");
+    answersDiv.innerHTML = "";
+
+    correctIndex = data.correct;
+
+    data.options.forEach((opt,i)=>{
+        let btn = document.createElement("button");
+        btn.className = "answer";
+        btn.innerText = opt;
+        btn.onclick = ()=> selectAnswer(btn,i);
+        answersDiv.appendChild(btn);
+    });
+
+    renderElimination();
+}
+
+function selectAnswer(btn,i){
+    document.querySelectorAll(".answer").forEach(b=>b.disabled=true);
+    if(i===correctIndex){
+        btn.classList.add("correct");
+    } else {
+        btn.classList.add("wrong");
+    }
+}
+
+function showAnswer(){
+    document.querySelectorAll(".answer")[correctIndex].classList.add("correct");
+}
+
+function renderElimination(){
+    let div = document.getElementById("elimination");
+    div.innerHTML = players.map(p=>`
+        <label>
+            <input type="checkbox" value="${p}"> ${p}
+        </label><br>
+    `).join("");
+}
+
+function eliminate(){
+    let checked = [...document.querySelectorAll("#elimination input:checked")].map(c=>c.value);
+    players = players.filter(p=>!checked.includes(p));
+
+    if(players.length === 1){
+        document.getElementById("winnerName").innerText = "🏆 "+players[0];
+        show("winner");
+        return;
+    }
+
+    generateQuestion();
+}
+</script>
+
+</body>
+</html>
