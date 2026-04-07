@@ -1,254 +1,193 @@
 const state = {
   players: [],
   currentQuestion: null,
-  round: 1,
   previousQuestions: []
 };
 
-const themeInput = document.getElementById('theme');
-const subthemeInput = document.getElementById('subtheme');
-const difficultySelect = document.getElementById('difficulty');
-const generateQuestionBtn = document.getElementById('generateQuestionBtn');
-const statusEl = document.getElementById('status');
-const playerNameInput = document.getElementById('playerName');
-const addPlayerBtn = document.getElementById('addPlayerBtn');
-const playersListEl = document.getElementById('playersList');
-const playerSelectEl = document.getElementById('playerSelect');
-const questionContainer = document.getElementById('questionContainer');
-const questionTextEl = document.getElementById('questionText');
-const optionsContainer = document.getElementById('optionsContainer');
-const revealAnswerBtn = document.getElementById('revealAnswerBtn');
-const answerRevealEl = document.getElementById('answerReveal');
-const emptyStateEl = document.getElementById('emptyState');
-const markCorrectBtn = document.getElementById('markCorrectBtn');
-const markWrongBtn = document.getElementById('markWrongBtn');
-const winnerBoxEl = document.getElementById('winnerBox');
-const roundBadgeEl = document.getElementById('roundBadge');
+const els = {
+  category: document.getElementById('category'),
+  subtopic: document.getElementById('subtopic'),
+  difficulty: document.getElementById('difficulty'),
+  playerName: document.getElementById('playerName'),
+  addPlayerBtn: document.getElementById('addPlayerBtn'),
+  playersList: document.getElementById('playersList'),
+  generateBtn: document.getElementById('generateBtn'),
+  status: document.getElementById('status'),
+  questionBox: document.getElementById('questionBox'),
+  questionText: document.getElementById('questionText'),
+  options: document.getElementById('options'),
+  revealBtn: document.getElementById('revealBtn'),
+  nextBtn: document.getElementById('nextBtn'),
+  answerBox: document.getElementById('answerBox'),
+  survivors: document.getElementById('survivors'),
+  eliminateBtn: document.getElementById('eliminateBtn'),
+  winnerBox: document.getElementById('winnerBox'),
+  newGameBtn: document.getElementById('newGameBtn')
+};
 
 function saveState() {
   localStorage.setItem('triviaEliminationState', JSON.stringify(state));
 }
 
 function loadState() {
-  const raw = localStorage.getItem('triviaEliminationState');
-  if (!raw) return;
+  const saved = localStorage.getItem('triviaEliminationState');
+  if (!saved) return;
   try {
-    const parsed = JSON.parse(raw);
-    state.players = Array.isArray(parsed.players) ? parsed.players : [];
+    const parsed = JSON.parse(saved);
+    state.players = parsed.players || [];
     state.currentQuestion = parsed.currentQuestion || null;
-    state.round = Number.isInteger(parsed.round) ? parsed.round : 1;
-    state.previousQuestions = Array.isArray(parsed.previousQuestions) ? parsed.previousQuestions : [];
-  } catch {
-    console.warn('Não foi possível restaurar o estado anterior.');
-  }
+    state.previousQuestions = parsed.previousQuestions || [];
+  } catch {}
 }
 
 function renderPlayers() {
-  playersListEl.innerHTML = '';
-
+  els.playersList.innerHTML = '';
   state.players.forEach((player) => {
     const chip = document.createElement('div');
-    chip.className = `player-chip ${player.active ? '' : 'eliminated'}`;
-    chip.innerHTML = `
-      <span>${player.name}</span>
-      <button class="remove-btn" data-id="${player.id}" title="Remover">✕</button>
-    `;
-    playersListEl.appendChild(chip);
-  });
-
-  document.querySelectorAll('.remove-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.id;
-      state.players = state.players.filter((p) => p.id !== id);
-      checkWinner();
-      renderPlayers();
-      renderPlayerSelect();
-      saveState();
-    });
+    chip.className = 'player-chip';
+    chip.innerHTML = `<span>${player.name}${player.alive ? '' : ' (eliminado)'}</span>`;
+    const remove = document.createElement('button');
+    remove.textContent = '✕';
+    remove.onclick = () => {
+      state.players = state.players.filter(p => p.id !== player.id);
+      renderAll();
+    };
+    chip.appendChild(remove);
+    els.playersList.appendChild(chip);
   });
 }
 
-function renderPlayerSelect() {
-  const activePlayers = state.players.filter((p) => p.active);
-  playerSelectEl.innerHTML = '';
+function renderSurvivors() {
+  const alive = state.players.filter(p => p.alive);
+  els.survivors.innerHTML = '';
 
-  if (!activePlayers.length) {
-    const option = document.createElement('option');
-    option.value = '';
-    option.textContent = 'Sem jogadores ativos';
-    playerSelectEl.appendChild(option);
-    return;
-  }
-
-  activePlayers.forEach((player) => {
-    const option = document.createElement('option');
-    option.value = player.id;
-    option.textContent = player.name;
-    playerSelectEl.appendChild(option);
+  alive.forEach(player => {
+    const item = document.createElement('label');
+    item.className = 'survivor-item';
+    item.innerHTML = `<input type="checkbox" data-id="${player.id}" /> <span>${player.name}</span>`;
+    els.survivors.appendChild(item);
   });
+
+  if (alive.length === 1) {
+    els.winnerBox.classList.remove('hidden');
+    els.winnerBox.textContent = `🏆 Vencedor: ${alive[0].name}`;
+    els.generateBtn.disabled = true;
+    els.eliminateBtn.disabled = true;
+  } else {
+    els.winnerBox.classList.add('hidden');
+    els.generateBtn.disabled = alive.length === 0;
+    els.eliminateBtn.disabled = alive.length === 0;
+  }
 }
 
 function renderQuestion() {
-  roundBadgeEl.textContent = `Rodada ${state.round}`;
-
   if (!state.currentQuestion) {
-    questionContainer.classList.add('hidden');
-    emptyStateEl.classList.remove('hidden');
+    els.questionBox.classList.add('hidden');
     return;
   }
 
-  questionContainer.classList.remove('hidden');
-  emptyStateEl.classList.add('hidden');
-  questionTextEl.textContent = state.currentQuestion.question;
-  optionsContainer.innerHTML = '';
-  answerRevealEl.classList.add('hidden');
-  answerRevealEl.innerHTML = '';
+  els.questionBox.classList.remove('hidden');
+  els.questionText.textContent = state.currentQuestion.question;
+  els.options.innerHTML = '';
 
-  state.currentQuestion.options.forEach((option) => {
+  state.currentQuestion.options.forEach((option, index) => {
     const div = document.createElement('div');
     div.className = 'option';
-    div.dataset.id = option.id;
-    div.innerHTML = `<strong>${option.id}.</strong> ${option.text}`;
-    optionsContainer.appendChild(div);
+    div.textContent = `${String.fromCharCode(65 + index)}. ${option}`;
+    els.options.appendChild(div);
   });
+
+  els.answerBox.classList.add('hidden');
+  els.answerBox.textContent = '';
+  els.nextBtn.classList.add('hidden');
 }
 
-function revealAnswer() {
-  if (!state.currentQuestion) return;
-  const correctId = state.currentQuestion.correctOptionId;
-  document.querySelectorAll('.option').forEach((el) => {
-    if (el.dataset.id === correctId) {
-      el.classList.add('correct');
-    }
-  });
-
-  const correctOption = state.currentQuestion.options.find((o) => o.id === correctId);
-  answerRevealEl.innerHTML = `
-    <strong>Resposta correta: ${correctId}</strong><br>
-    ${correctOption ? correctOption.text : ''}<br><br>
-    <strong>Explicação:</strong> ${state.currentQuestion.explanation || 'Sem explicação.'}
-  `;
-  answerRevealEl.classList.remove('hidden');
-}
-
-function addPlayer() {
-  const name = playerNameInput.value.trim();
-  if (!name) return;
-
-  state.players.push({
-    id: crypto.randomUUID(),
-    name,
-    active: true
-  });
-
-  playerNameInput.value = '';
+function renderAll() {
   renderPlayers();
-  renderPlayerSelect();
+  renderSurvivors();
+  renderQuestion();
   saveState();
 }
 
-function setStatus(message, isError = false) {
-  statusEl.textContent = message;
-  statusEl.style.color = isError ? '#fca5a5' : '#94a3b8';
-}
+els.addPlayerBtn.onclick = () => {
+  const name = els.playerName.value.trim();
+  if (!name) return;
+  state.players.push({ id: crypto.randomUUID(), name, alive: true });
+  els.playerName.value = '';
+  renderAll();
+};
 
-async function generateQuestion() {
-  const theme = themeInput.value.trim();
-  const subtheme = subthemeInput.value.trim();
-  const difficulty = difficultySelect.value;
+els.playerName.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') els.addPlayerBtn.click();
+});
 
-  if (!theme || !subtheme) {
-    setStatus('Preencha o tema e o subtema.', true);
+els.generateBtn.onclick = async () => {
+  const alive = state.players.filter(p => p.alive);
+  if (alive.length < 2) {
+    els.status.textContent = 'É preciso pelo menos 2 jogadores vivos para continuar.';
     return;
   }
 
-  generateQuestionBtn.disabled = true;
-  setStatus('Gerando pergunta...');
+  els.generateBtn.disabled = true;
+  els.status.textContent = 'Gerando pergunta com IA...';
 
   try {
-    const response = await fetch('/api/question', {
+    const response = await fetch('/api/generate-question', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        theme,
-        subtheme,
-        difficulty,
-        previousQuestions: state.previousQuestions.slice(-8)
+        category: els.category.value,
+        subtopic: els.subtopic.value.trim(),
+        difficulty: els.difficulty.value,
+        previousQuestions: state.previousQuestions
       })
     });
 
     const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Falha ao gerar pergunta.');
-    }
+    if (!response.ok) throw new Error(data.error || 'Falha ao gerar pergunta.');
 
     state.currentQuestion = data;
     state.previousQuestions.push(data.question);
+    els.status.textContent = 'Pergunta pronta. Leia em voz alta para o grupo.';
     renderQuestion();
     saveState();
-    setStatus('Pergunta gerada com sucesso.');
   } catch (error) {
-    setStatus(error.message, true);
+    els.status.textContent = `Erro: ${error.message}`;
   } finally {
-    generateQuestionBtn.disabled = false;
+    els.generateBtn.disabled = false;
   }
-}
+};
 
-function markPlayer(correct) {
-  const playerId = playerSelectEl.value;
-  if (!playerId) return;
+els.revealBtn.onclick = () => {
+  if (!state.currentQuestion) return;
+  const idx = state.currentQuestion.correctIndex;
+  const letter = String.fromCharCode(65 + idx);
+  const text = state.currentQuestion.options[idx];
+  els.answerBox.innerHTML = `<strong>Resposta correta:</strong> ${letter}. ${text}<br><br><strong>Explicação:</strong> ${state.currentQuestion.explanation}`;
+  els.answerBox.classList.remove('hidden');
+  els.nextBtn.classList.remove('hidden');
+};
 
-  const player = state.players.find((p) => p.id === playerId);
-  if (!player) return;
+els.nextBtn.onclick = () => {
+  state.currentQuestion = null;
+  renderAll();
+  els.status.textContent = 'Marque quem errou e elimine antes de gerar a próxima pergunta.';
+};
 
-  if (!correct) {
-    player.active = false;
-  }
+els.eliminateBtn.onclick = () => {
+  const checked = [...document.querySelectorAll('#survivors input[type="checkbox"]:checked')].map(cb => cb.dataset.id);
+  state.players = state.players.map(player => checked.includes(player.id) ? { ...player, alive: false } : player);
+  renderAll();
+};
 
-  renderPlayers();
-  renderPlayerSelect();
-  saveState();
-  checkWinner();
-}
-
-function checkWinner() {
-  const activePlayers = state.players.filter((p) => p.active);
-
-  if (activePlayers.length === 1 && state.players.length > 1) {
-    winnerBoxEl.textContent = `🏆 Vencedor: ${activePlayers[0].name}`;
-    winnerBoxEl.classList.remove('hidden');
-  } else if (activePlayers.length === 0 && state.players.length > 0) {
-    winnerBoxEl.textContent = 'Todos foram eliminados. Reinicie os jogadores para uma nova partida.';
-    winnerBoxEl.classList.remove('hidden');
-  } else {
-    winnerBoxEl.classList.add('hidden');
-  }
-}
-
-function nextRoundIfPossible() {
-  const activePlayers = state.players.filter((p) => p.active);
-  if (activePlayers.length > 1) {
-    state.round += 1;
-    roundBadgeEl.textContent = `Rodada ${state.round}`;
-    saveState();
-  }
-}
-
-addPlayerBtn.addEventListener('click', addPlayer);
-playerNameInput.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter') addPlayer();
-});
-generateQuestionBtn.addEventListener('click', generateQuestion);
-revealAnswerBtn.addEventListener('click', revealAnswer);
-markCorrectBtn.addEventListener('click', () => markPlayer(true));
-markWrongBtn.addEventListener('click', () => {
-  markPlayer(false);
-  nextRoundIfPossible();
-});
+els.newGameBtn.onclick = () => {
+  if (!confirm('Deseja reiniciar todo o jogo?')) return;
+  state.players = [];
+  state.currentQuestion = null;
+  state.previousQuestions = [];
+  renderAll();
+  els.status.textContent = 'Novo jogo iniciado.';
+};
 
 loadState();
-renderPlayers();
-renderPlayerSelect();
-renderQuestion();
-checkWinner();
+renderAll();

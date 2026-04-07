@@ -1,48 +1,39 @@
-# Jogo de Perguntas Eliminatórias
+# Quiz de Eliminação com IA
 
-Aplicativo web simples para um jogo em grupo:
+Projeto pronto para subir no GitHub e publicar na Vercel, sem precisar rodar localmente.
 
-- uma pessoa fica com o celular
-- o grupo escolhe um tema e um subtema
-- a IA gera uma pergunta interessante com 4 alternativas
-- o coordenador revela a resposta correta
-- quem errar sai do jogo
-- vence o último jogador restante
+## O que este app faz
+
+- Cadastro de jogadores
+- Escolha de tema e subtema
+- Geração online de perguntas interessantes com IA
+- 4 alternativas por pergunta
+- Revelação da resposta correta
+- Eliminação manual dos jogadores que erraram
+- Definição automática do vencedor
+- Salvamento do estado no navegador
+
+## Publicação sem instalar nada no computador
+
+### 1. Suba a pasta para um repositório no GitHub
+Pode ser arrastando os arquivos pela interface web do GitHub.
+
+### 2. Publique na Vercel
+- Entre na Vercel
+- Clique em **Add New Project**
+- Importe o repositório do GitHub
+- Em **Environment Variables**, crie:
+  - `OPENAI_API_KEY` = sua chave da OpenAI
+- Clique em **Deploy**
+
+Pronto. O app ficará online com frontend + backend serverless.
 
 ## Estrutura
 
-- `server.js`: backend Express que chama a API da OpenAI
-- `public/index.html`: interface do jogo
-- `public/style.css`: estilo visual
-- `public/app.js`: lógica do frontend
-- `.env.example`: exemplo das variáveis de ambiente
+- `public/` → site
+- `api/generate-question.js` → função serverless que chama a OpenAI
+- `vercel.json` → configuração da publicação
 
-## Como usar
+## Observação importante
 
-1. Instale o Node.js.
-2. Abra a pasta do projeto no terminal.
-3. Instale as dependências:
-
-```bash
-npm install
-```
-
-4. Crie o arquivo `.env` com base no `.env.example`.
-5. Coloque sua chave da OpenAI em `OPENAI_API_KEY`.
-6. Rode o servidor:
-
-```bash
-npm start
-```
-
-7. Abra no navegador:
-
-```text
-http://localhost:3000
-```
-
-## Observações
-
-- o estado do jogo fica salvo no `localStorage`
-- a chave da OpenAI deve ficar apenas no backend
-- você pode depois evoluir isso para ranking, cronômetro, categorias prontas, voz e placar
+GitHub Pages sozinho não é suficiente para este caso, porque ele hospeda apenas arquivos estáticos. Como a chave da OpenAI precisa ficar protegida no servidor, a publicação recomendada aqui é **GitHub + Vercel**.

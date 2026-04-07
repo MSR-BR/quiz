@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "functions": {
+    "api/generate-question.js": {
+      "maxDuration": 30
+    }
+  },
+  "routes": [
+    { "src": "/api/generate-question", "dest": "/api/generate-question.js" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/public/$1" }
+  ]
+}

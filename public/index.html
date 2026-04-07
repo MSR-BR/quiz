@@ -3,81 +3,80 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Jogo de Perguntas Eliminatórias</title>
+  <title>Quiz de Eliminação</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="app-shell">
-    <header class="hero">
-      <h1>Jogo de Perguntas Eliminatórias</h1>
-      <p>O coordenador escolhe o tema, a IA gera a pergunta e quem errar sai da rodada.</p>
+    <header class="hero card">
+      <div>
+        <p class="eyebrow">Jogo em grupo</p>
+        <h1>Quiz de Eliminação com IA</h1>
+        <p class="lead">O coordenador escolhe o tema, a IA cria perguntas interessantes, os jogadores respondem em roda e quem errar sai.</p>
+      </div>
+      <button id="newGameBtn" class="secondary">Novo jogo</button>
     </header>
 
     <main class="grid">
       <section class="card">
-        <h2>1. Configuração da rodada</h2>
-        <div class="form-group">
-          <label for="theme">Tema geral</label>
-          <input id="theme" type="text" placeholder="Ex.: História" value="História" />
-        </div>
+        <h2>1. Configuração</h2>
+        <label>Tema geral</label>
+        <select id="category">
+          <option>História</option>
+          <option>Segunda Guerra Mundial</option>
+          <option>História do Brasil</option>
+          <option>Matemática</option>
+          <option>Ciências</option>
+          <option>Biologia</option>
+          <option>Direito</option>
+          <option>Frases famosas</option>
+          <option>Filosofia</option>
+          <option>Literatura</option>
+        </select>
 
-        <div class="form-group">
-          <label for="subtheme">Subtema específico</label>
-          <input id="subtheme" type="text" placeholder="Ex.: Segunda Guerra Mundial" value="Segunda Guerra Mundial" />
-        </div>
+        <label>Subtema específico</label>
+        <input id="subtopic" placeholder="Ex.: Revolução de 1930, genética mendeliana, direito constitucional" />
 
-        <div class="form-group">
-          <label for="difficulty">Dificuldade</label>
-          <select id="difficulty">
-            <option value="médio">Médio</option>
-            <option value="difícil">Difícil</option>
-            <option value="muito difícil">Muito difícil</option>
-          </select>
-        </div>
-
-        <button id="generateQuestionBtn" class="primary">Gerar pergunta</button>
-        <p id="status" class="status"></p>
+        <label>Nível</label>
+        <select id="difficulty">
+          <option value="medium">Médio</option>
+          <option value="hard">Difícil</option>
+          <option value="very hard">Muito difícil</option>
+        </select>
       </section>
 
       <section class="card">
         <h2>2. Jogadores</h2>
-        <div class="inline-form">
-          <input id="playerName" type="text" placeholder="Nome do jogador" />
+        <div class="row">
+          <input id="playerName" placeholder="Nome do jogador" />
           <button id="addPlayerBtn">Adicionar</button>
         </div>
         <div id="playersList" class="players"></div>
       </section>
 
-      <section class="card question-card full-width">
+      <section class="card wide">
         <div class="question-header">
-          <h2>3. Pergunta atual</h2>
-          <span id="roundBadge" class="badge">Rodada 1</span>
+          <h2>3. Rodada</h2>
+          <button id="generateBtn">Gerar pergunta</button>
         </div>
-
-        <div id="questionContainer" class="hidden">
-          <p id="questionText" class="question-text"></p>
-          <div id="optionsContainer" class="options"></div>
-
-          <div class="reveal-box">
-            <button id="revealAnswerBtn">Revelar resposta correta</button>
-            <div id="answerReveal" class="hidden answer-reveal"></div>
+        <div id="status" class="status">Adicione jogadores e gere a primeira pergunta.</div>
+        <div id="questionBox" class="hidden">
+          <p id="questionText" class="question"></p>
+          <div id="options" class="options"></div>
+          <div class="row wrap">
+            <button id="revealBtn" class="secondary">Revelar resposta</button>
+            <button id="nextBtn" class="hidden">Próxima pergunta</button>
           </div>
-        </div>
-
-        <div id="emptyState" class="empty-state">
-          Gere uma pergunta para começar.
+          <div id="answerBox" class="answer hidden"></div>
         </div>
       </section>
 
-      <section class="card full-width">
+      <section class="card wide">
         <h2>4. Eliminação</h2>
-        <p>Depois que alguém responder em voz alta, o coordenador marca se acertou ou errou.</p>
-        <div class="inline-form responsive">
-          <select id="playerSelect"></select>
-          <button id="markCorrectBtn" class="success">Acertou</button>
-          <button id="markWrongBtn" class="danger">Errou e saiu</button>
-        </div>
-        <div id="winnerBox" class="winner-box hidden"></div>
+        <p class="small">Depois que a pessoa responder em voz alta, o coordenador marca abaixo quem errou. Quem errar sai do jogo.</p>
+        <div id="survivors" class="survivors"></div>
+        <button id="eliminateBtn" class="danger">Eliminar selecionados</button>
+        <div id="winnerBox" class="winner hidden"></div>
       </section>
     </main>
   </div>

@@ -1,16 +1,10 @@
 {
-  "name": "trivia-elimination-app",
+  "name": "trivia-elimination-ai",
   "version": "1.0.0",
-  "description": "Web app de perguntas eliminatórias com IA",
-  "main": "server.js",
-  "type": "module",
+  "private": true,
+  "description": "AI-powered elimination trivia game ready for GitHub + Vercel",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
+    "start": "npx serve public"
   },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.2"
-  }
+  "dependencies": {}
 }
