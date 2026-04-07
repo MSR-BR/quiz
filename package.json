@@ -1,0 +1,16 @@
+{
+  "name": "trivia-elimination-app",
+  "version": "1.0.0",
+  "description": "Web app de perguntas eliminatórias com IA",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2"
+  }
+}
