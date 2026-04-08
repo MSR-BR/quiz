@@ -5,929 +5,468 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quiz em Grupo</title>
   <style>
-    :root{
-      --bg:#f5f7fb;
-      --surface:#ffffff;
-      --surface-2:#f8fafc;
-      --text:#132238;
-      --muted:#5f6f85;
-      --primary:#2f6fed;
-      --primary-strong:#1f58c7;
-      --primary-soft:#eaf1ff;
-      --border:#dbe4f0;
-      --success:#198754;
-      --success-soft:#e9f8f0;
-      --danger:#d64545;
-      --danger-soft:#ffefef;
-      --warning:#f59e0b;
-      --shadow:0 18px 50px rgba(31, 52, 88, .08);
-      --radius-xl:24px;
-      --radius-lg:18px;
-      --radius-md:14px;
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #6b7280;
+      --line: #e6eaf2;
+      --primary: #2563eb;
+      --primary-soft: #dbeafe;
+      --danger: #ef4444;
+      --danger-soft: #fee2e2;
+      --success: #16a34a;
+      --success-soft: #dcfce7;
+      --shadow: 0 12px 30px rgba(23, 32, 51, 0.08);
+      --radius: 20px;
     }
 
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0}
-    body{
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background:linear-gradient(180deg,#f7f9fd 0%, #eef3fb 100%);
-      color:var(--text);
-      min-height:100vh;
+      background: linear-gradient(180deg, #f9fbff 0%, #f3f6fb 100%);
+      color: var(--text);
     }
 
-    .app{
-      max-width:960px;
-      margin:0 auto;
-      padding:24px 16px 40px;
+    .app {
+      max-width: 720px;
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+      display: grid;
+      gap: 16px;
     }
 
-    .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:16px;
-      margin-bottom:18px;
+    .hero {
+      padding: 12px 6px 2px;
+      text-align: center;
     }
 
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:14px;
+    .eyebrow {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--primary);
+      margin-bottom: 8px;
     }
 
-    .brand-badge{
-      width:52px;
-      height:52px;
-      border-radius:16px;
-      background:linear-gradient(135deg,var(--primary),#68a2ff);
-      color:#fff;
-      display:grid;
-      place-items:center;
-      font-size:24px;
-      box-shadow:var(--shadow);
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 5vw, 42px);
+      line-height: 1.05;
     }
 
-    .brand small{
-      display:block;
-      color:var(--muted);
-      font-size:12px;
-      letter-spacing:.08em;
-      text-transform:uppercase;
-      margin-bottom:2px;
+    .subtitle {
+      margin: 10px auto 0;
+      max-width: 520px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.5;
     }
 
-    .brand h1{
-      margin:0;
-      font-size:clamp(26px,3vw,36px);
-      line-height:1.05;
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
     }
 
-    .ghost-btn,.primary-btn,.danger-btn,.secondary-btn{
-      border:none;
-      border-radius:999px;
-      padding:14px 20px;
-      font-size:15px;
-      font-weight:700;
-      cursor:pointer;
-      transition:.2s ease;
-    }
-    .primary-btn{background:var(--primary); color:#fff; box-shadow:0 10px 24px rgba(47,111,237,.22)}
-    .primary-btn:hover{background:var(--primary-strong); transform:translateY(-1px)}
-    .secondary-btn{background:#eef4ff;color:var(--primary)}
-    .secondary-btn:hover{background:#e5eeff}
-    .ghost-btn{background:#fff;color:var(--text); border:1px solid var(--border)}
-    .ghost-btn:hover{background:#f8fbff}
-    .danger-btn{background:var(--danger);color:#fff}
-
-    .hero{
-      background:rgba(255,255,255,.76);
-      backdrop-filter: blur(10px);
-      border:1px solid rgba(219,228,240,.85);
-      box-shadow:var(--shadow);
-      border-radius:32px;
-      padding:28px;
-      margin-bottom:18px;
+    .section-title {
+      margin: 0 0 14px;
+      font-size: 18px;
     }
 
-    .hero-grid{
-      display:grid;
-      grid-template-columns:1.25fr .9fr;
-      gap:20px;
-      align-items:center;
+    .label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 600;
     }
 
-    .hero p{
-      margin:10px 0 0;
-      color:var(--muted);
-      font-size:17px;
-      line-height:1.55;
-      max-width:58ch;
+    select, input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 15px;
+      font-size: 16px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
     }
 
-    .hero-panel{
-      background:linear-gradient(180deg,#f8fbff 0%, #eef4ff 100%);
-      border:1px solid #d8e5ff;
-      border-radius:24px;
-      padding:18px;
-      display:grid;
-      gap:12px;
+    select:focus, input:focus {
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
     }
 
-    .stat-row{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:10px;
+    .row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
     }
 
-    .stat{
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:18px;
-      padding:14px;
+    .btn {
+      appearance: none;
+      border: none;
+      border-radius: 16px;
+      padding: 15px 18px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .08s ease, box-shadow .2s ease, opacity .2s ease;
     }
 
-    .stat .label{font-size:12px;color:var(--muted);margin-bottom:6px}
-    .stat .value{font-size:24px;font-weight:800}
+    .btn:active { transform: scale(.99); }
 
-    .progress-wrap{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:20px;
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.22);
     }
 
-    .step-pill{
-      background:#ffffffb8;
-      border:1px solid var(--border);
-      border-radius:999px;
-      padding:10px 14px;
-      color:var(--muted);
-      font-weight:700;
-      font-size:14px;
-    }
-    .step-pill.active{
-      background:var(--primary-soft);
-      color:var(--primary);
-      border-color:#cfe0ff;
+    .btn-secondary {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--line);
     }
 
-    .screen{display:none}
-    .screen.active{display:block}
-
-    .grid-2{
-      display:grid;
-      grid-template-columns:1.1fr .9fr;
-      gap:18px;
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+      box-shadow: 0 10px 20px rgba(239, 68, 68, 0.18);
     }
 
-    .card{
-      background:var(--surface);
-      border:1px solid var(--border);
-      border-radius:var(--radius-xl);
-      box-shadow:var(--shadow);
-      padding:22px;
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
     }
 
-    .card h2,.card h3{
-      margin:0 0 8px;
-      font-size:28px;
-      line-height:1.1;
+    .players {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
     }
 
-    .card p.sub{
-      margin:0 0 20px;
-      color:var(--muted);
-      line-height:1.55;
+    .player-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-weight: 600;
     }
 
-    .form-grid{
-      display:grid;
-      gap:16px;
+    .chip-remove {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 0;
     }
 
-    .input-group label{
-      display:block;
-      font-size:14px;
-      font-weight:700;
-      margin:0 0 8px;
+    .question-box {
+      display: grid;
+      gap: 14px;
     }
 
-    input,select,textarea{
-      width:100%;
-      border:1px solid var(--border);
-      background:#fff;
-      border-radius:16px;
-      padding:15px 16px;
-      font-size:16px;
-      color:var(--text);
-      outline:none;
-      transition:border-color .2s ease, box-shadow .2s ease;
-    }
-    input:focus,select:focus,textarea:focus{
-      border-color:#b9d0ff;
-      box-shadow:0 0 0 4px rgba(47,111,237,.09);
+    .question-text {
+      font-size: clamp(22px, 3.5vw, 30px);
+      line-height: 1.28;
+      font-weight: 800;
+      margin: 0;
     }
 
-    .theme-grid{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:12px;
+    .answers {
+      display: grid;
+      gap: 10px;
     }
 
-    .choice-card{
-      border:1px solid var(--border);
-      border-radius:18px;
-      padding:16px;
-      background:var(--surface-2);
-      cursor:pointer;
-      transition:.2s ease;
-    }
-    .choice-card:hover{transform:translateY(-1px); border-color:#bfd3fb; background:#fff}
-    .choice-card.selected{background:var(--primary-soft); border-color:#b8d0ff}
-    .choice-card strong{display:block; font-size:16px; margin-bottom:4px}
-    .choice-card span{color:var(--muted); font-size:14px; line-height:1.45}
-
-    .actions{
-      display:flex;
-      gap:12px;
-      justify-content:flex-end;
-      flex-wrap:wrap;
-      margin-top:20px;
+    .answer {
+      width: 100%;
+      text-align: left;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 15px 16px;
+      font-size: 16px;
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color .2s ease, background .2s ease, transform .08s ease;
     }
 
-    .player-input-row{
-      display:grid;
-      grid-template-columns:1fr auto;
-      gap:10px;
-      margin-bottom:16px;
+    .answer:active { transform: scale(.99); }
+    .answer.correct {
+      background: var(--success-soft);
+      border-color: #86efac;
+      color: #166534;
+      font-weight: 700;
     }
 
-    .player-list{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-      gap:12px;
+    .answer.wrong {
+      background: var(--danger-soft);
+      border-color: #fca5a5;
+      color: #991b1b;
+      font-weight: 700;
     }
 
-    .player-chip{
-      background:var(--surface-2);
-      border:1px solid var(--border);
-      border-radius:18px;
-      padding:14px 14px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      font-weight:700;
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
 
-    .player-chip button{
-      width:32px;
-      height:32px;
-      border-radius:50%;
-      border:none;
-      background:#fff;
-      color:var(--danger);
-      cursor:pointer;
-      font-size:18px;
+    .elimination-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
     }
 
-    .question-shell{
-      background:linear-gradient(180deg,#ffffff 0%, #f7fbff 100%);
-      border:1px solid #dbe7ff;
-      border-radius:28px;
-      padding:24px;
-      margin-bottom:18px;
+    .elimination-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #fff;
     }
 
-    .question-meta{
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-      margin-bottom:14px;
-      color:var(--muted);
-      font-weight:700;
-      font-size:14px;
+    .elimination-item input { width: 20px; height: 20px; }
+
+    .winner {
+      text-align: center;
+      padding: 28px 18px;
     }
 
-    .question-title{
-      font-size:clamp(24px,3vw,34px);
-      line-height:1.22;
-      margin:0;
+    .winner h2 {
+      margin: 0;
+      font-size: 34px;
     }
 
-    .answers{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:14px;
-      margin-top:20px;
+    .winner p {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 16px;
     }
 
-    .answer-btn{
-      width:100%;
-      text-align:left;
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:20px;
-      padding:18px;
-      color:var(--text);
-      cursor:pointer;
-      transition:.18s ease;
-      min-height:94px;
-      display:flex;
-      gap:14px;
-      align-items:flex-start;
-    }
-    .answer-btn:hover{transform:translateY(-1px); border-color:#c6d7f6; box-shadow:0 12px 24px rgba(30,58,138,.08)}
-    .answer-btn.locked{cursor:default; opacity:.94}
-    .answer-btn.correct{background:var(--success-soft); border-color:#a7e0bf}
-    .answer-btn.wrong{background:var(--danger-soft); border-color:#f2bcbc}
+    .hidden { display: none !important; }
 
-    .answer-letter{
-      width:34px;
-      height:34px;
-      border-radius:50%;
-      display:grid;
-      place-items:center;
-      background:#eef3fb;
-      font-weight:800;
-      flex:0 0 auto;
-    }
-
-    .round-layout{
-      display:grid;
-      grid-template-columns:1.15fr .85fr;
-      gap:18px;
-    }
-
-    .side-stack{
-      display:grid;
-      gap:18px;
-    }
-
-    .player-toggle-list{display:grid; gap:10px; margin-top:10px}
-    .player-toggle{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      padding:12px 14px;
-      border-radius:16px;
-      background:var(--surface-2);
-      border:1px solid var(--border);
-    }
-    .player-toggle input{width:20px;height:20px;margin:0}
-
-    .winner-card{
-      text-align:center;
-      padding:40px 22px;
-    }
-
-    .trophy{
-      width:96px;height:96px;border-radius:28px;
-      display:grid;place-items:center;
-      background:linear-gradient(135deg,#ffe18b,#ffc247);
-      font-size:48px;margin:0 auto 16px;
-      box-shadow:0 18px 36px rgba(245,158,11,.25);
-    }
-
-    .muted{color:var(--muted)}
-    .center{display:flex;align-items:center;justify-content:center}
-    .hidden{display:none !important}
-    .loading{
-      background:repeating-linear-gradient(90deg,#eef3fb 0,#eef3fb 8px,#f7fbff 8px,#f7fbff 16px);
-      animation:pulse 1s linear infinite;
-      height:120px;
-      border-radius:22px;
-      border:1px solid var(--border);
-    }
-    @keyframes pulse { from {background-position:0 0;} to {background-position:160px 0;} }
-
-    @media (max-width: 860px){
-      .hero-grid,.grid-2,.round-layout{grid-template-columns:1fr}
-    }
-
-    @media (max-width: 640px){
-      .app{padding:16px 12px 28px}
-      .hero,.card{padding:18px}
-      .topbar{align-items:flex-start; flex-direction:column}
-      .actions{justify-content:stretch}
-      .actions button{flex:1}
-      .player-input-row{grid-template-columns:1fr}
-      .answers{grid-template-columns:1fr}
-      .theme-grid{grid-template-columns:1fr}
-      .card h2,.card h3{font-size:24px}
-      .question-title{font-size:24px}
+    @media (max-width: 640px) {
+      .toolbar { grid-template-columns: 1fr; }
+      .app { padding: 16px 12px 28px; }
+      .card { padding: 16px; }
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <div class="topbar">
-      <div class="brand">
-        <div class="brand-badge">🎯</div>
-        <div>
-          <small>Jogo em grupo</small>
-          <h1>Quiz de Eliminação</h1>
-        </div>
-      </div>
-      <button class="ghost-btn" id="resetTopBtn">Novo jogo</button>
-    </div>
+  <main class="app">
+    <section class="hero">
+      <div class="eyebrow">Quiz em grupo</div>
+      <h1>Uma pergunta por vez.</h1>
+      <p class="subtitle">Escolha o tema, gere a pergunta e elimine quem errou. Só o essencial na tela.</p>
+    </section>
 
-    <section class="hero" id="heroSection">
-      <div class="hero-grid">
-        <div>
-          <div class="progress-wrap" id="progressBar"></div>
-          <h2 style="margin:0;font-size:clamp(30px,4vw,46px);line-height:1.06;">Mais claro, mais leve e feito para jogar em roda.</h2>
-          <p>O coordenador escolhe o tema, adiciona os jogadores e conduz as rodadas. A pergunta aparece com alternativas grandes, a resposta correta pode ser revelada e quem errar sai até sobrar apenas um vencedor.</p>
-          <div class="actions" style="justify-content:flex-start; margin-top:22px;">
-            <button class="primary-btn" id="startBtn">Começar</button>
-          </div>
-        </div>
-        <div class="hero-panel">
-          <div class="stat-row">
-            <div class="stat"><div class="label">Etapas</div><div class="value">4</div></div>
-            <div class="stat"><div class="label">Formato</div><div class="value">Rápido</div></div>
-            <div class="stat"><div class="label">Uso</div><div class="value">Celular</div></div>
-          </div>
-          <div style="background:#fff;border:1px solid var(--border); border-radius:18px; padding:14px 16px;">
-            <strong style="display:block; margin-bottom:6px;">Fluxo do jogo</strong>
-            <div class="muted" style="line-height:1.6; font-size:15px;">Configuração → Jogadores → Rodadas → Vencedor</div>
-          </div>
-          <div style="background:#fff;border:1px solid var(--border); border-radius:18px; padding:14px 16px;">
-            <strong style="display:block; margin-bottom:6px;">Foco desta versão</strong>
-            <div class="muted" style="line-height:1.6; font-size:15px;">Layout claro, botões grandes, navegação simples e visual mais amigável.</div>
-          </div>
-        </div>
+    <section class="card">
+      <h2 class="section-title">Tema</h2>
+      <label class="label" for="tema">Selecionar tema</label>
+      <select id="tema">
+        <option value="História">História</option>
+        <option value="Ciência">Ciência</option>
+        <option value="Direito">Direito</option>
+        <option value="Biologia">Biologia</option>
+        <option value="Matemática">Matemática</option>
+        <option value="Frases famosas">Frases famosas</option>
+      </select>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">Jogadores</h2>
+      <div class="row">
+        <input id="playerInput" type="text" placeholder="Nome do jogador" />
+        <button class="btn btn-secondary" id="addPlayerBtn">Adicionar jogador</button>
+      </div>
+      <div id="playersList" class="players"></div>
+    </section>
+
+    <section class="card question-box">
+      <div>
+        <h2 class="section-title">Pergunta</h2>
+        <p id="statusText" class="muted">Toque em “Gerar pergunta”.</p>
+      </div>
+
+      <p id="questionText" class="question-text">Nenhuma pergunta ainda.</p>
+      <div id="answers" class="answers"></div>
+
+      <div class="toolbar">
+        <button class="btn btn-primary" id="generateBtn">Gerar pergunta</button>
+        <button class="btn btn-secondary" id="revealBtn">Mostrar resposta</button>
       </div>
     </section>
 
-    <main>
-      <section class="screen" id="screen-setup">
-        <div class="grid-2">
-          <div class="card">
-            <h2>1. Escolha o tema</h2>
-            <p class="sub">Selecione uma área principal e depois detalhe o assunto para a IA gerar perguntas mais interessantes.</p>
+    <section class="card">
+      <h2 class="section-title">Eliminar jogadores</h2>
+      <p class="muted">Marque apenas quem errou a pergunta.</p>
+      <div id="eliminationList" class="elimination-list"></div>
+      <div style="margin-top: 14px;">
+        <button class="btn btn-danger" id="eliminateBtn">Eliminar selecionados</button>
+      </div>
+    </section>
 
-            <div class="form-grid">
-              <div>
-                <label style="display:block; font-size:14px; font-weight:700; margin-bottom:10px;">Tema geral</label>
-                <div class="theme-grid" id="themeGrid"></div>
-              </div>
-
-              <div class="input-group">
-                <label for="subtema">Subtema específico</label>
-                <input id="subtema" type="text" placeholder="Ex.: Segunda Guerra, Brasil República, genética mendeliana, direito constitucional" />
-              </div>
-
-              <div class="input-group">
-                <label for="nivel">Nível</label>
-                <select id="nivel">
-                  <option value="médio">Médio</option>
-                  <option value="difícil">Difícil</option>
-                  <option value="avançado">Avançado</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="actions">
-              <button class="primary-btn" id="toPlayersBtn">Continuar</button>
-            </div>
-          </div>
-
-          <div class="card">
-            <h3>Resumo da rodada</h3>
-            <p class="sub">Antes de começar, defina um tema realmente específico. Isso melhora bastante a qualidade das perguntas.</p>
-            <div style="display:grid; gap:14px;">
-              <div style="padding:14px 16px; border-radius:18px; background:var(--surface-2); border:1px solid var(--border);">
-                <strong style="display:block; margin-bottom:6px;">Exemplos bons</strong>
-                <div class="muted">Crise de 1929, Guerra Fria na América Latina, bioquímica do DNA, jurisprudência constitucional.</div>
-              </div>
-              <div style="padding:14px 16px; border-radius:18px; background:var(--surface-2); border:1px solid var(--border);">
-                <strong style="display:block; margin-bottom:6px;">Evite temas vagos</strong>
-                <div class="muted">“História”, “Ciência” ou “Direito” sozinhos tendem a gerar perguntas genéricas demais.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="screen" id="screen-players">
-        <div class="grid-2">
-          <div class="card">
-            <h2>2. Adicione os jogadores</h2>
-            <p class="sub">Cadastre quem vai participar. Quem errar uma rodada será eliminado.</p>
-
-            <div class="player-input-row">
-              <input id="playerName" type="text" placeholder="Nome do jogador" />
-              <button class="primary-btn" id="addPlayerBtn">Adicionar</button>
-            </div>
-
-            <div class="player-list" id="playerList"></div>
-
-            <div class="actions">
-              <button class="ghost-btn" id="backToSetupBtn">Voltar</button>
-              <button class="primary-btn" id="startGameBtn">Começar jogo</button>
-            </div>
-          </div>
-
-          <div class="card">
-            <h3>Como funciona</h3>
-            <p class="sub">A pergunta aparece na tela. O grupo responde em voz alta. Depois o coordenador revela a alternativa correta e marca quem errou.</p>
-            <div style="display:grid; gap:12px;">
-              <div class="player-chip"><span>1. Todos respondem</span></div>
-              <div class="player-chip"><span>2. Revela a correta</span></div>
-              <div class="player-chip"><span>3. Marca quem errou</span></div>
-              <div class="player-chip"><span>4. Próxima rodada</span></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="screen" id="screen-game">
-        <div class="round-layout">
-          <div class="card">
-            <div id="questionLoading" class="hidden">
-              <div class="loading"></div>
-            </div>
-            <div id="questionContent">
-              <div class="question-shell">
-                <div class="question-meta">
-                  <span id="questionMetaTheme">Tema</span>
-                  <span id="questionMetaRound">Rodada 1</span>
-                </div>
-                <h2 class="question-title" id="questionText">Clique em “Gerar pergunta” para iniciar.</h2>
-                <div class="answers" id="answers"></div>
-              </div>
-            </div>
-            <div class="actions">
-              <button class="ghost-btn" id="backToPlayersBtn">Voltar</button>
-              <button class="secondary-btn" id="revealBtn">Mostrar resposta</button>
-              <button class="primary-btn" id="generateBtn">Gerar pergunta</button>
-            </div>
-          </div>
-
-          <div class="side-stack">
-            <div class="card">
-              <h3>Jogadores ativos</h3>
-              <p class="sub">Marque apenas quem errou a rodada atual.</p>
-              <div class="player-toggle-list" id="eliminationList"></div>
-              <div class="actions">
-                <button class="danger-btn" id="eliminateBtn">Eliminar selecionados</button>
-              </div>
-            </div>
-
-            <div class="card">
-              <h3>Status</h3>
-              <p class="sub">Resumo rápido do andamento.</p>
-              <div style="display:grid; gap:12px;">
-                <div class="stat"><div class="label">Jogadores restantes</div><div class="value" id="playersRemaining">0</div></div>
-                <div class="stat"><div class="label">Perguntas geradas</div><div class="value" id="questionsCount">0</div></div>
-                <div class="stat"><div class="label">Tema atual</div><div class="value" style="font-size:18px" id="statusTheme">—</div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="screen" id="screen-winner">
-        <div class="card winner-card">
-          <div class="trophy">🏆</div>
-          <h2 style="font-size:42px; margin-bottom:10px;">Temos um vencedor</h2>
-          <p class="sub" id="winnerSubtitle">Parabéns!</p>
-          <div style="font-size:32px; font-weight:900; margin:18px 0 26px;" id="winnerName">Jogador</div>
-          <div class="actions center">
-            <button class="primary-btn" id="playAgainBtn">Novo jogo</button>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
+    <section id="winnerCard" class="card winner hidden">
+      <div class="eyebrow">Fim do jogo</div>
+      <h2 id="winnerName">Vencedor</h2>
+      <p>Parabéns. Esse foi o último jogador restante.</p>
+    </section>
+  </main>
 
   <script>
-    const themes = [
-      { value: 'História', desc: 'Brasil, guerras, civilizações, ideias e processos históricos.' },
-      { value: 'Matemática', desc: 'Lógica, números, problemas, teoremas e raciocínio quantitativo.' },
-      { value: 'Ciências', desc: 'Física, química, biologia, astronomia e ciência em geral.' },
-      { value: 'Direito', desc: 'Constituição, princípios, jurisprudência e teoria jurídica.' },
-      { value: 'Frases famosas', desc: 'Literatura, política, filosofia e citações memoráveis.' },
-      { value: 'Biologia', desc: 'Genética, evolução, corpo humano e ecologia.' }
-    ];
+    const players = [];
+    let currentQuestion = null;
+    let revealed = false;
 
-    const state = {
-      currentScreen: 'setup',
-      theme: 'História',
-      subtheme: '',
-      level: 'médio',
-      players: [],
-      round: 1,
-      questionsCount: 0,
-      currentQuestion: null,
-      revealed: false
-    };
-
-    const progressSteps = [
-      { id: 'setup', label: '1. Tema' },
-      { id: 'players', label: '2. Jogadores' },
-      { id: 'game', label: '3. Rodadas' },
-      { id: 'winner', label: '4. Final' }
-    ];
-
-    const progressBar = document.getElementById('progressBar');
-    const themeGrid = document.getElementById('themeGrid');
-    const playerList = document.getElementById('playerList');
+    const playerInput = document.getElementById('playerInput');
+    const playersList = document.getElementById('playersList');
     const eliminationList = document.getElementById('eliminationList');
+    const temaSelect = document.getElementById('tema');
     const questionText = document.getElementById('questionText');
-    const answersEl = document.getElementById('answers');
-    const questionMetaTheme = document.getElementById('questionMetaTheme');
-    const questionMetaRound = document.getElementById('questionMetaRound');
-    const playersRemaining = document.getElementById('playersRemaining');
-    const questionsCount = document.getElementById('questionsCount');
-    const statusTheme = document.getElementById('statusTheme');
-    const questionLoading = document.getElementById('questionLoading');
-    const questionContent = document.getElementById('questionContent');
-
-    function saveState() {
-      localStorage.setItem('quizEliminationStateV2', JSON.stringify(state));
-    }
-
-    function loadState() {
-      const raw = localStorage.getItem('quizEliminationStateV2');
-      if (!raw) return;
-      try {
-        const parsed = JSON.parse(raw);
-        Object.assign(state, parsed);
-      } catch {}
-    }
-
-    function resetState() {
-      state.currentScreen = 'setup';
-      state.theme = 'História';
-      state.subtheme = '';
-      state.level = 'médio';
-      state.players = [];
-      state.round = 1;
-      state.questionsCount = 0;
-      state.currentQuestion = null;
-      state.revealed = false;
-      localStorage.removeItem('quizEliminationStateV2');
-      document.getElementById('subtema').value = '';
-      document.getElementById('nivel').value = 'médio';
-      document.getElementById('playerName').value = '';
-      showScreen('setup');
-      renderAll();
-    }
-
-    function showScreen(name) {
-      state.currentScreen = name;
-      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-      const screen = document.getElementById(`screen-${name}`);
-      if (screen) screen.classList.add('active');
-      renderProgress();
-      saveState();
-    }
-
-    function renderProgress() {
-      progressBar.innerHTML = progressSteps.map(step => {
-        const active = step.id === state.currentScreen ? 'active' : '';
-        return `<div class="step-pill ${active}">${step.label}</div>`;
-      }).join('');
-    }
-
-    function renderThemes() {
-      themeGrid.innerHTML = themes.map(theme => `
-        <div class="choice-card ${state.theme === theme.value ? 'selected' : ''}" data-theme="${theme.value}">
-          <strong>${theme.value}</strong>
-          <span>${theme.desc}</span>
-        </div>
-      `).join('');
-
-      themeGrid.querySelectorAll('.choice-card').forEach(card => {
-        card.addEventListener('click', () => {
-          state.theme = card.dataset.theme;
-          renderThemes();
-          renderStatus();
-          saveState();
-        });
-      });
-    }
+    const answersDiv = document.getElementById('answers');
+    const statusText = document.getElementById('statusText');
+    const winnerCard = document.getElementById('winnerCard');
+    const winnerName = document.getElementById('winnerName');
 
     function renderPlayers() {
-      playerList.innerHTML = state.players.length
-        ? state.players.map((player, index) => `
-            <div class="player-chip">
-              <span>${player}</span>
-              <button type="button" data-remove="${index}" aria-label="Remover ${player}">×</button>
-            </div>
-          `).join('')
-        : `<div class="muted">Nenhum jogador adicionado ainda.</div>`;
+      playersList.innerHTML = '';
+      eliminationList.innerHTML = '';
 
-      playerList.querySelectorAll('button[data-remove]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          state.players.splice(Number(btn.dataset.remove), 1);
-          renderPlayers();
-          renderEliminationList();
-          renderStatus();
-          saveState();
-        });
-      });
-    }
-
-    function renderEliminationList() {
-      eliminationList.innerHTML = state.players.length
-        ? state.players.map((player, index) => `
-            <label class="player-toggle">
-              <input type="checkbox" value="${index}" />
-              <span>${player}</span>
-            </label>
-          `).join('')
-        : `<div class="muted">Sem jogadores ativos.</div>`;
-    }
-
-    function renderQuestion() {
-      if (!state.currentQuestion) {
-        questionText.textContent = 'Clique em “Gerar pergunta” para iniciar.';
-        answersEl.innerHTML = '';
-        questionMetaTheme.textContent = `${state.theme}${state.subtheme ? ' • ' + state.subtheme : ''}`;
-        questionMetaRound.textContent = `Rodada ${state.round}`;
+      if (!players.length) {
+        playersList.innerHTML = '<span class="muted">Nenhum jogador adicionado.</span>';
+        eliminationList.innerHTML = '<span class="muted">Adicione jogadores para começar.</span>';
         return;
       }
 
-      questionText.textContent = state.currentQuestion.question;
-      questionMetaTheme.textContent = `${state.theme}${state.subtheme ? ' • ' + state.subtheme : ''}`;
-      questionMetaRound.textContent = `Rodada ${state.round}`;
-
-      const letters = ['A','B','C','D','E'];
-      answersEl.innerHTML = state.currentQuestion.options.map((option, index) => {
-        let cls = 'answer-btn';
-        if (state.revealed && index === state.currentQuestion.correct) cls += ' correct';
-        return `
-          <button class="${cls} ${state.revealed ? 'locked' : ''}" type="button" data-answer="${index}">
-            <span class="answer-letter">${letters[index]}</span>
-            <span>${option}</span>
-          </button>
-        `;
-      }).join('');
-
-      answersEl.querySelectorAll('[data-answer]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          if (state.revealed) return;
-          const index = Number(btn.dataset.answer);
-          answersEl.querySelectorAll('.answer-btn').forEach(el => el.classList.remove('wrong'));
-          if (index !== state.currentQuestion.correct) btn.classList.add('wrong');
+      players.forEach((name, index) => {
+        const chip = document.createElement('div');
+        chip.className = 'player-chip';
+        chip.innerHTML = `<span>${name}</span><button class="chip-remove" aria-label="Remover ${name}">×</button>`;
+        chip.querySelector('button').addEventListener('click', () => {
+          players.splice(index, 1);
+          checkWinner();
+          renderPlayers();
         });
+        playersList.appendChild(chip);
+
+        const row = document.createElement('label');
+        row.className = 'elimination-item';
+        row.innerHTML = `<input type="checkbox" value="${name}" /><span>${name}</span>`;
+        eliminationList.appendChild(row);
       });
     }
 
-    function renderStatus() {
-      playersRemaining.textContent = state.players.length;
-      questionsCount.textContent = state.questionsCount;
-      statusTheme.textContent = state.subtheme ? `${state.theme} / ${state.subtheme}` : state.theme;
-    }
-
-    function renderAll() {
-      renderProgress();
-      renderThemes();
+    function addPlayer() {
+      const name = playerInput.value.trim();
+      if (!name) return;
+      players.push(name);
+      playerInput.value = '';
       renderPlayers();
-      renderEliminationList();
-      renderQuestion();
-      renderStatus();
-      document.getElementById('subtema').value = state.subtheme || '';
-      document.getElementById('nivel').value = state.level || 'médio';
     }
 
     async function generateQuestion() {
-      if (state.players.length < 2) {
-        alert('Adicione pelo menos 2 jogadores antes de começar.');
-        return;
-      }
-
-      state.subtheme = document.getElementById('subtema').value.trim();
-      state.level = document.getElementById('nivel').value;
-      saveState();
-
-      questionLoading.classList.remove('hidden');
-      questionContent.classList.add('hidden');
+      const tema = temaSelect.value;
+      statusText.textContent = 'Gerando pergunta...';
+      questionText.textContent = 'Aguarde um instante.';
+      answersDiv.innerHTML = '';
+      revealed = false;
 
       try {
         const response = await fetch('/api/generate-question', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            theme: state.theme,
-            subtheme: state.subtheme,
-            level: state.level
-          })
+          body: JSON.stringify({ tema })
         });
 
-        if (!response.ok) {
-          throw new Error('Falha ao gerar a pergunta.');
-        }
+        if (!response.ok) throw new Error('Falha ao gerar pergunta');
 
         const data = await response.json();
-        if (!data || !data.question || !Array.isArray(data.options)) {
-          throw new Error('Resposta inválida da API.');
-        }
+        currentQuestion = data;
+        questionText.textContent = data.question;
+        statusText.textContent = `Tema atual: ${tema}`;
 
-        state.currentQuestion = {
-          question: data.question,
-          options: data.options,
-          correct: Number(data.correct)
-        };
-        state.revealed = false;
-        state.questionsCount += 1;
-        renderQuestion();
-        renderStatus();
-        saveState();
+        data.options.forEach((option, index) => {
+          const btn = document.createElement('button');
+          btn.className = 'answer';
+          btn.textContent = option;
+          btn.addEventListener('click', () => markAnswer(index, btn));
+          answersDiv.appendChild(btn);
+        });
       } catch (error) {
-        alert('Não foi possível gerar a pergunta agora. Verifique a API e tente novamente.');
-      } finally {
-        questionLoading.classList.add('hidden');
-        questionContent.classList.remove('hidden');
+        currentQuestion = null;
+        questionText.textContent = 'Não foi possível gerar a pergunta.';
+        statusText.textContent = 'Verifique a integração da API.';
+      }
+    }
+
+    function markAnswer(index, btn) {
+      if (!currentQuestion || revealed) return;
+      const buttons = [...document.querySelectorAll('.answer')];
+      buttons.forEach((b) => b.disabled = true);
+      if (index === currentQuestion.correct) {
+        btn.classList.add('correct');
+      } else {
+        btn.classList.add('wrong');
       }
     }
 
     function revealAnswer() {
-      if (!state.currentQuestion) return;
-      state.revealed = true;
-      renderQuestion();
-      saveState();
+      if (!currentQuestion) return;
+      revealed = true;
+      const buttons = [...document.querySelectorAll('.answer')];
+      buttons.forEach((b, index) => {
+        b.disabled = true;
+        if (index === currentQuestion.correct) b.classList.add('correct');
+      });
     }
 
     function eliminateSelected() {
-      const checked = Array.from(eliminationList.querySelectorAll('input:checked')).map(input => Number(input.value));
-      if (!checked.length) {
-        alert('Marque quem errou antes de eliminar.');
-        return;
+      const marked = [...document.querySelectorAll('#eliminationList input:checked')].map((el) => el.value);
+      if (!marked.length) return;
+
+      for (let i = players.length - 1; i >= 0; i--) {
+        if (marked.includes(players[i])) players.splice(i, 1);
       }
 
-      state.players = state.players.filter((_, index) => !checked.includes(index));
-
-      if (state.players.length === 1) {
-        document.getElementById('winnerName').textContent = state.players[0];
-        document.getElementById('winnerSubtitle').textContent = 'Parabéns ao último jogador que permaneceu no jogo.';
-        renderPlayers();
-        renderEliminationList();
-        renderStatus();
-        showScreen('winner');
-        return;
-      }
-
-      state.round += 1;
-      state.currentQuestion = null;
-      state.revealed = false;
       renderPlayers();
-      renderEliminationList();
-      renderQuestion();
-      renderStatus();
-      saveState();
+      checkWinner();
     }
 
-    function addPlayer() {
-      const input = document.getElementById('playerName');
-      const name = input.value.trim();
-      if (!name) return;
-      state.players.push(name);
-      input.value = '';
-      renderPlayers();
-      renderEliminationList();
-      renderStatus();
-      saveState();
-      input.focus();
+    function checkWinner() {
+      if (players.length === 1) {
+        winnerName.textContent = players[0];
+        winnerCard.classList.remove('hidden');
+      } else {
+        winnerCard.classList.add('hidden');
+      }
     }
 
-    document.getElementById('startBtn').addEventListener('click', () => showScreen('setup'));
-    document.getElementById('toPlayersBtn').addEventListener('click', () => {
-      state.subtheme = document.getElementById('subtema').value.trim();
-      state.level = document.getElementById('nivel').value;
-      saveState();
-      showScreen('players');
-    });
-    document.getElementById('backToSetupBtn').addEventListener('click', () => showScreen('setup'));
-    document.getElementById('backToPlayersBtn').addEventListener('click', () => showScreen('players'));
-    document.getElementById('startGameBtn').addEventListener('click', () => {
-      if (state.players.length < 2) {
-        alert('Adicione pelo menos 2 jogadores para começar.');
-        return;
-      }
-      showScreen('game');
-      renderQuestion();
-      renderStatus();
-    });
     document.getElementById('addPlayerBtn').addEventListener('click', addPlayer);
-    document.getElementById('playerName').addEventListener('keydown', e => {
-      if (e.key === 'Enter') addPlayer();
-    });
     document.getElementById('generateBtn').addEventListener('click', generateQuestion);
     document.getElementById('revealBtn').addEventListener('click', revealAnswer);
     document.getElementById('eliminateBtn').addEventListener('click', eliminateSelected);
-    document.getElementById('playAgainBtn').addEventListener('click', resetState);
-    document.getElementById('resetTopBtn').addEventListener('click', resetState);
-    document.getElementById('subtema').addEventListener('input', e => { state.subtheme = e.target.value; saveState(); renderStatus(); });
-    document.getElementById('nivel').addEventListener('change', e => { state.level = e.target.value; saveState(); });
+    playerInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addPlayer();
+    });
 
-    loadState();
-    renderAll();
-    showScreen(state.currentScreen || 'setup');
+    renderPlayers();
   </script>
 </body>
 </html>
