@@ -1,245 +1,610 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quiz de Eliminação</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz</title>
+  <style>
+    :root {
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #dbe1ea;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --soft: #eef2ff;
+      --danger: #dc2626;
+      --danger-soft: #fee2e2;
+      --success: #16a34a;
+      --success-soft: #dcfce7;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --radius: 20px;
+    }
 
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f5f7fb;
-  margin: 0;
-  color: #222;
-}
+    * {
+      box-sizing: border-box;
+    }
 
-.container {
-  max-width: 600px;
-  margin: auto;
-  padding: 20px;
-}
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
 
-.card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 15px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-}
+    .wrap {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
 
-h1, h2 {
-  margin-top: 0;
-}
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
 
-select, input {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
 
-button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-size: 15px;
-}
+    h1 {
+      font-size: 2.1rem;
+      margin: 0;
+      letter-spacing: -0.03em;
+    }
 
-.primary {
-  background: #2563eb;
-  color: white;
-}
+    h2 {
+      font-size: 1.25rem;
+      margin: 0 0 14px;
+    }
 
-.secondary {
-  background: #e2e8f0;
-}
+    .subtitle {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.98rem;
+      line-height: 1.4;
+    }
 
-.answer {
-  background: #edf2f7;
-}
+    label {
+      display: block;
+      font-size: 0.92rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
 
-.correct {
-  background: #22c55e;
-  color: white;
-}
+    select,
+    input[type="text"] {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      font-size: 1rem;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
 
-.wrong {
-  background: #ef4444;
-  color: white;
-}
+    select:focus,
+    input[type="text"]:focus {
+      border-color: var(--primary);
+    }
 
-.chip {
-  display: inline-block;
-  padding: 6px 10px;
-  margin: 5px;
-  background: #e2e8f0;
-  border-radius: 20px;
-}
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
 
-.hidden {
-  display: none;
-}
+    .row > * {
+      min-width: 0;
+    }
 
-.small {
-  font-size: 14px;
-  color: #555;
-}
-</style>
+    .grow {
+      flex: 1;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 14px 18px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: #d9dde5;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      filter: brightness(0.95);
+    }
+
+    .btn-full {
+      width: 100%;
+    }
+
+    .players {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .player-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--soft);
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .chip-remove {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .chip-remove:hover {
+      color: var(--danger);
+    }
+
+    .question-box {
+      font-size: 1.25rem;
+      font-weight: 800;
+      line-height: 1.4;
+      margin-bottom: 16px;
+    }
+
+    .answers {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .answer-btn {
+      width: 100%;
+      text-align: left;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-weight: 600;
+    }
+
+    .answer-btn:hover {
+      background: #f1f5f9;
+    }
+
+    .answer-btn.correct {
+      background: var(--success-soft);
+      border-color: #86efac;
+      color: #166534;
+    }
+
+    .answer-btn.wrong {
+      background: var(--danger-soft);
+      border-color: #fca5a5;
+      color: #991b1b;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .explanation {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      color: #374151;
+      line-height: 1.5;
+    }
+
+    .elim-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .elim-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .winner {
+      text-align: center;
+      padding: 24px 10px;
+    }
+
+    .winner h2 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+    }
+
+    @media (max-width: 560px) {
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      .row {
+        flex-direction: column;
+      }
+
+      .row button {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
-
 <body>
+  <div class="wrap">
+    <section class="card">
+      <div class="topbar">
+        <h1>🎯 Quiz</h1>
+        <button class="btn-secondary" id="resetBtn" type="button">Novo jogo</button>
+      </div>
+      <div class="subtitle">
+        Escolha o tema, adicione os jogadores e gere a pergunta.
+      </div>
+    </section>
 
-<div class="container">
+    <section class="card">
+      <label for="tema">Tema</label>
+      <select id="tema">
+        <option>História do Brasil</option>
+        <option>Segunda Guerra Mundial</option>
+        <option>Geopolítica</option>
+        <option>Capitais e geografia</option>
+        <option>Saúde e prevenção</option>
+        <option>Nutrição e hábitos</option>
+        <option>Direito e cidadania</option>
+        <option>Economia e inflação</option>
+        <option>Filosofia</option>
+        <option>Psicologia e comportamento</option>
+        <option>Biologia e genética</option>
+        <option>Física do cotidiano</option>
+        <option>Astronomia</option>
+        <option>Tecnologia e inteligência artificial</option>
+        <option>Frases famosas e contexto histórico</option>
+      </select>
+    </section>
 
-<div class="card">
-  <h1>🎯 Quiz</h1>
+    <section class="card">
+      <h2>Jogadores</h2>
+      <div class="row">
+        <input id="playerInput" class="grow" type="text" placeholder="Nome do jogador" />
+        <button id="addPlayerBtn" class="btn-secondary" type="button">Adicionar</button>
+      </div>
+      <div id="players" class="players"></div>
+    </section>
 
-  <select id="tema">
-    <option>História</option>
-    <option>Segunda Guerra</option>
-    <option>Geopolítica</option>
-    <option>Filosofia</option>
-    <option>Direito</option>
-    <option>Economia</option>
-    <option>Saúde</option>
-    <option>Psicologia</option>
-    <option>Biologia</option>
-    <option>Tecnologia</option>
-    <option>Capitais</option>
-    <option>Frases famosas</option>
-  </select>
-</div>
+    <section class="card">
+      <button id="generateBtn" class="btn-primary btn-full" type="button">Gerar pergunta</button>
+      <div id="status" class="status"></div>
+    </section>
 
-<div class="card">
-  <h2>Jogadores</h2>
+    <section id="quizCard" class="card hidden">
+      <div id="question" class="question-box"></div>
+      <div id="answers" class="answers"></div>
+      <button id="showAnswerBtn" class="btn-secondary btn-full" type="button" style="margin-top:12px;">
+        Mostrar resposta
+      </button>
+      <div id="explanation" class="explanation hidden"></div>
+    </section>
 
-  <input id="playerInput" placeholder="Nome do jogador">
-  <button class="secondary" onclick="addPlayer()">Adicionar</button>
+    <section id="elimCard" class="card hidden">
+      <h2>Quem errou?</h2>
+      <div class="muted">Marque os jogadores que erraram esta rodada.</div>
+      <div id="elimList" class="elim-list"></div>
+      <button id="eliminateBtn" class="btn-danger btn-full" type="button" style="margin-top:14px;">
+        Eliminar selecionados
+      </button>
+    </section>
 
-  <div id="players"></div>
-</div>
+    <section id="winnerCard" class="card hidden">
+      <div class="winner">
+        <h2 id="winnerText"></h2>
+        <div class="muted" style="margin-bottom:14px;">Fim do jogo.</div>
+        <button id="playAgainBtn" class="btn-primary" type="button">Novo jogo</button>
+      </div>
+    </section>
+  </div>
 
-<div class="card">
-  <button class="primary" onclick="generateQuestion()">Gerar pergunta</button>
-</div>
+  <script>
+    let players = [];
+    let correctIndex = null;
+    let explanationText = "";
+    let answerRevealed = false;
 
-<div class="card hidden" id="quizCard">
-  <h2 id="question"></h2>
+    const playerInput = document.getElementById("playerInput");
+    const playersEl = document.getElementById("players");
+    const temaEl = document.getElementById("tema");
+    const statusEl = document.getElementById("status");
 
-  <div id="answers"></div>
+    const quizCard = document.getElementById("quizCard");
+    const questionEl = document.getElementById("question");
+    const answersEl = document.getElementById("answers");
+    const explanationEl = document.getElementById("explanation");
 
-  <button class="secondary" onclick="showAnswer()">Mostrar resposta</button>
+    const elimCard = document.getElementById("elimCard");
+    const elimListEl = document.getElementById("elimList");
 
-  <p class="small" id="explanation"></p>
-</div>
+    const winnerCard = document.getElementById("winnerCard");
+    const winnerText = document.getElementById("winnerText");
 
-<div class="card hidden" id="elimCard">
-  <h2>Quem errou?</h2>
-  <div id="elimList"></div>
-  <button class="primary" onclick="eliminate()">Eliminar</button>
-</div>
+    function setStatus(text) {
+      statusEl.textContent = text || "";
+    }
 
-<div class="card hidden" id="winnerCard">
-  <h1 id="winner"></h1>
-  <button class="primary" onclick="location.reload()">Novo jogo</button>
-</div>
+    function renderPlayers() {
+      playersEl.innerHTML = "";
 
-</div>
+      players.forEach((name, index) => {
+        const chip = document.createElement("div");
+        chip.className = "player-chip";
+        chip.innerHTML = `
+          <span>${escapeHtml(name)}</span>
+          <button class="chip-remove" type="button" aria-label="Remover jogador">×</button>
+        `;
+        chip.querySelector(".chip-remove").addEventListener("click", () => {
+          players.splice(index, 1);
+          renderPlayers();
+        });
+        playersEl.appendChild(chip);
+      });
+    }
 
-<script>
-let players = [];
-let correctIndex = 0;
-let explanationText = "";
+    function addPlayer() {
+      const name = playerInput.value.trim();
+      if (!name) return;
+      players.push(name);
+      playerInput.value = "";
+      renderPlayers();
+      playerInput.focus();
+    }
 
-function addPlayer() {
-  let name = document.getElementById("playerInput").value.trim();
-  if (!name) return;
-  players.push(name);
-  document.getElementById("playerInput").value = "";
-  renderPlayers();
-}
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
 
-function renderPlayers() {
-  document.getElementById("players").innerHTML =
-    players.map(p => `<span class="chip">${p}</span>`).join("");
-}
+    function renderElimination() {
+      elimListEl.innerHTML = "";
 
-async function generateQuestion() {
-  const tema = document.getElementById("tema").value;
+      players.forEach((name) => {
+        const item = document.createElement("label");
+        item.className = "elim-item";
+        item.innerHTML = `
+          <input type="checkbox" value="${escapeHtml(name)}" />
+          <span>${escapeHtml(name)}</span>
+        `;
+        elimListEl.appendChild(item);
+      });
+    }
 
-  const res = await fetch("/api/generate-question", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ tema })
-  });
+    function resetRoundUI() {
+      questionEl.textContent = "";
+      answersEl.innerHTML = "";
+      explanationEl.textContent = "";
+      explanationEl.classList.add("hidden");
+      correctIndex = null;
+      explanationText = "";
+      answerRevealed = false;
+    }
 
-  const data = await res.json();
+    async function generateQuestion() {
+      if (players.length < 2) {
+        alert("Adicione pelo menos 2 jogadores.");
+        return;
+      }
 
-  document.getElementById("quizCard").classList.remove("hidden");
-  document.getElementById("elimCard").classList.remove("hidden");
+      resetRoundUI();
+      setStatus("Gerando pergunta...");
 
-  document.getElementById("question").innerText = data.question;
-  explanationText = data.explanation;
+      try {
+        const res = await fetch("/api/generate-question", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            tema: temaEl.value
+          })
+        });
 
-  correctIndex = data.correct;
+        const data = await res.json();
 
-  const answersDiv = document.getElementById("answers");
-  answersDiv.innerHTML = "";
+        if (!res.ok) {
+          console.error(data);
+          alert("Erro ao gerar pergunta: " + (data.error || "erro desconhecido"));
+          setStatus("");
+          return;
+        }
 
-  data.options.forEach((opt, i) => {
-    let btn = document.createElement("button");
-    btn.className = "answer";
-    btn.innerText = opt;
-    btn.onclick = () => selectAnswer(btn, i);
-    answersDiv.appendChild(btn);
-  });
+        if (
+          !data ||
+          !data.question ||
+          !Array.isArray(data.options) ||
+          data.options.length !== 4 ||
+          typeof data.correct !== "number"
+        ) {
+          console.error(data);
+          alert("A API retornou um formato inválido.");
+          setStatus("");
+          return;
+        }
 
-  renderElimination();
-}
+        questionEl.textContent = data.question;
+        correctIndex = data.correct;
+        explanationText = data.explanation || "";
 
-function selectAnswer(btn, i) {
-  document.querySelectorAll(".answer").forEach(b => b.disabled = true);
+        data.options.forEach((optionText, index) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "answer-btn";
+          btn.textContent = optionText;
+          btn.addEventListener("click", () => selectAnswer(btn, index));
+          answersEl.appendChild(btn);
+        });
 
-  if (i === correctIndex) {
-    btn.classList.add("correct");
-  } else {
-    btn.classList.add("wrong");
-  }
-}
+        quizCard.classList.remove("hidden");
+        elimCard.classList.remove("hidden");
+        winnerCard.classList.add("hidden");
+        renderElimination();
+        setStatus("");
+      } catch (error) {
+        console.error(error);
+        alert("Falha ao conectar com a API.");
+        setStatus("");
+      }
+    }
 
-function showAnswer() {
-  document.querySelectorAll(".answer")[correctIndex].classList.add("correct");
-  document.getElementById("explanation").innerText = explanationText;
-}
+    function selectAnswer(button, index) {
+      if (answerRevealed) return;
 
-function renderElimination() {
-  document.getElementById("elimList").innerHTML =
-    players.map(p => `
-      <label>
-        <input type="checkbox" value="${p}"> ${p}
-      </label><br>
-    `).join("");
-}
+      const buttons = document.querySelectorAll(".answer-btn");
+      buttons.forEach((btn) => {
+        btn.disabled = true;
+      });
 
-function eliminate() {
-  let selected = [...document.querySelectorAll("#elimList input:checked")]
-    .map(x => x.value);
+      if (index === correctIndex) {
+        button.classList.add("correct");
+      } else {
+        button.classList.add("wrong");
+      }
+    }
 
-  players = players.filter(p => !selected.includes(p));
+    function showAnswer() {
+      if (correctIndex === null) return;
 
-  if (players.length === 1) {
-    document.getElementById("winnerCard").classList.remove("hidden");
-    document.getElementById("winner").innerText = "🏆 " + players[0];
-    return;
-  }
+      const buttons = document.querySelectorAll(".answer-btn");
+      if (!buttons.length) return;
 
-  generateQuestion();
-}
-</script>
+      buttons.forEach((btn) => {
+        btn.disabled = true;
+      });
 
+      if (buttons[correctIndex]) {
+        buttons[correctIndex].classList.add("correct");
+      }
+
+      if (explanationText) {
+        explanationEl.textContent = explanationText;
+        explanationEl.classList.remove("hidden");
+      }
+
+      answerRevealed = true;
+    }
+
+    function eliminatePlayers() {
+      const checked = Array.from(
+        document.querySelectorAll('#elimList input[type="checkbox"]:checked')
+      ).map((input) => input.value);
+
+      if (!checked.length) {
+        alert("Selecione pelo menos um jogador para eliminar.");
+        return;
+      }
+
+      players = players.filter((name) => !checked.includes(name));
+      renderPlayers();
+
+      if (players.length === 1) {
+        winnerText.textContent = `🏆 ${players[0]} venceu`;
+        winnerCard.classList.remove("hidden");
+        quizCard.classList.add("hidden");
+        elimCard.classList.add("hidden");
+        setStatus("");
+        return;
+      }
+
+      if (players.length === 0) {
+        winnerText.textContent = "Sem vencedor";
+        winnerCard.classList.remove("hidden");
+        quizCard.classList.add("hidden");
+        elimCard.classList.add("hidden");
+        setStatus("");
+        return;
+      }
+
+      generateQuestion();
+    }
+
+    function resetGame() {
+      players = [];
+      renderPlayers();
+      resetRoundUI();
+      quizCard.classList.add("hidden");
+      elimCard.classList.add("hidden");
+      winnerCard.classList.add("hidden");
+      setStatus("");
+      playerInput.value = "";
+      temaEl.selectedIndex = 0;
+    }
+
+    document.getElementById("addPlayerBtn").addEventListener("click", addPlayer);
+    document.getElementById("generateBtn").addEventListener("click", generateQuestion);
+    document.getElementById("showAnswerBtn").addEventListener("click", showAnswer);
+    document.getElementById("eliminateBtn").addEventListener("click", eliminatePlayers);
+    document.getElementById("resetBtn").addEventListener("click", resetGame);
+    document.getElementById("playAgainBtn").addEventListener("click", resetGame);
+
+    playerInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") addPlayer();
+    });
+  </script>
 </body>
 </html>
