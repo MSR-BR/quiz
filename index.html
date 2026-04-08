@@ -1,472 +1,245 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quiz em Grupo</title>
-  <style>
-    :root {
-      --bg: #f6f8fb;
-      --card: #ffffff;
-      --text: #172033;
-      --muted: #6b7280;
-      --line: #e6eaf2;
-      --primary: #2563eb;
-      --primary-soft: #dbeafe;
-      --danger: #ef4444;
-      --danger-soft: #fee2e2;
-      --success: #16a34a;
-      --success-soft: #dcfce7;
-      --shadow: 0 12px 30px rgba(23, 32, 51, 0.08);
-      --radius: 20px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz de Eliminação</title>
 
-    * { box-sizing: border-box; }
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  margin: 0;
+  color: #222;
+}
 
-    body {
-      margin: 0;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: linear-gradient(180deg, #f9fbff 0%, #f3f6fb 100%);
-      color: var(--text);
-    }
+.container {
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+}
 
-    .app {
-      max-width: 720px;
-      min-height: 100vh;
-      margin: 0 auto;
-      padding: 24px 16px 40px;
-      display: grid;
-      gap: 16px;
-    }
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
 
-    .hero {
-      padding: 12px 6px 2px;
-      text-align: center;
-    }
+h1, h2 {
+  margin-top: 0;
+}
 
-    .eyebrow {
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: var(--primary);
-      margin-bottom: 8px;
-    }
+select, input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
 
-    h1 {
-      margin: 0;
-      font-size: clamp(28px, 5vw, 42px);
-      line-height: 1.05;
-    }
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+}
 
-    .subtitle {
-      margin: 10px auto 0;
-      max-width: 520px;
-      color: var(--muted);
-      font-size: 16px;
-      line-height: 1.5;
-    }
+.primary {
+  background: #2563eb;
+  color: white;
+}
 
-    .card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
-    }
+.secondary {
+  background: #e2e8f0;
+}
 
-    .section-title {
-      margin: 0 0 14px;
-      font-size: 18px;
-    }
+.answer {
+  background: #edf2f7;
+}
 
-    .label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      font-weight: 600;
-    }
+.correct {
+  background: #22c55e;
+  color: white;
+}
 
-    select, input {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 14px 15px;
-      font-size: 16px;
-      background: #fff;
-      color: var(--text);
-      outline: none;
-    }
+.wrong {
+  background: #ef4444;
+  color: white;
+}
 
-    select:focus, input:focus {
-      border-color: #93c5fd;
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
-    }
+.chip {
+  display: inline-block;
+  padding: 6px 10px;
+  margin: 5px;
+  background: #e2e8f0;
+  border-radius: 20px;
+}
 
-    .row {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-    }
+.hidden {
+  display: none;
+}
 
-    .btn {
-      appearance: none;
-      border: none;
-      border-radius: 16px;
-      padding: 15px 18px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform .08s ease, box-shadow .2s ease, opacity .2s ease;
-    }
-
-    .btn:active { transform: scale(.99); }
-
-    .btn-primary {
-      background: var(--primary);
-      color: #fff;
-      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.22);
-    }
-
-    .btn-secondary {
-      background: #fff;
-      color: var(--text);
-      border: 1px solid var(--line);
-    }
-
-    .btn-danger {
-      background: var(--danger);
-      color: #fff;
-      box-shadow: 0 10px 20px rgba(239, 68, 68, 0.18);
-    }
-
-    .muted {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    .players {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .player-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: #f8fafc;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      padding: 10px 12px;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .chip-remove {
-      background: transparent;
-      border: none;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 16px;
-      line-height: 1;
-      padding: 0;
-    }
-
-    .question-box {
-      display: grid;
-      gap: 14px;
-    }
-
-    .question-text {
-      font-size: clamp(22px, 3.5vw, 30px);
-      line-height: 1.28;
-      font-weight: 800;
-      margin: 0;
-    }
-
-    .answers {
-      display: grid;
-      gap: 10px;
-    }
-
-    .answer {
-      width: 100%;
-      text-align: left;
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 15px 16px;
-      font-size: 16px;
-      color: var(--text);
-      cursor: pointer;
-      transition: border-color .2s ease, background .2s ease, transform .08s ease;
-    }
-
-    .answer:active { transform: scale(.99); }
-    .answer.correct {
-      background: var(--success-soft);
-      border-color: #86efac;
-      color: #166534;
-      font-weight: 700;
-    }
-
-    .answer.wrong {
-      background: var(--danger-soft);
-      border-color: #fca5a5;
-      color: #991b1b;
-      font-weight: 700;
-    }
-
-    .toolbar {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .elimination-list {
-      display: grid;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .elimination-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid var(--line);
-      background: #fff;
-    }
-
-    .elimination-item input { width: 20px; height: 20px; }
-
-    .winner {
-      text-align: center;
-      padding: 28px 18px;
-    }
-
-    .winner h2 {
-      margin: 0;
-      font-size: 34px;
-    }
-
-    .winner p {
-      margin: 10px 0 0;
-      color: var(--muted);
-      font-size: 16px;
-    }
-
-    .hidden { display: none !important; }
-
-    @media (max-width: 640px) {
-      .toolbar { grid-template-columns: 1fr; }
-      .app { padding: 16px 12px 28px; }
-      .card { padding: 16px; }
-    }
-  </style>
+.small {
+  font-size: 14px;
+  color: #555;
+}
+</style>
 </head>
+
 <body>
-  <main class="app">
-    <section class="hero">
-      <div class="eyebrow">Quiz em grupo</div>
-      <h1>Uma pergunta por vez.</h1>
-      <p class="subtitle">Escolha o tema, gere a pergunta e elimine quem errou. Só o essencial na tela.</p>
-    </section>
 
-    <section class="card">
-      <h2 class="section-title">Tema</h2>
-      <label class="label" for="tema">Selecionar tema</label>
-      <select id="tema">
-        <option value="História">História</option>
-        <option value="Ciência">Ciência</option>
-        <option value="Direito">Direito</option>
-        <option value="Biologia">Biologia</option>
-        <option value="Matemática">Matemática</option>
-        <option value="Frases famosas">Frases famosas</option>
-      </select>
-    </section>
+<div class="container">
 
-    <section class="card">
-      <h2 class="section-title">Jogadores</h2>
-      <div class="row">
-        <input id="playerInput" type="text" placeholder="Nome do jogador" />
-        <button class="btn btn-secondary" id="addPlayerBtn">Adicionar jogador</button>
-      </div>
-      <div id="playersList" class="players"></div>
-    </section>
+<div class="card">
+  <h1>🎯 Quiz</h1>
 
-    <section class="card question-box">
-      <div>
-        <h2 class="section-title">Pergunta</h2>
-        <p id="statusText" class="muted">Toque em “Gerar pergunta”.</p>
-      </div>
+  <select id="tema">
+    <option>História</option>
+    <option>Segunda Guerra</option>
+    <option>Geopolítica</option>
+    <option>Filosofia</option>
+    <option>Direito</option>
+    <option>Economia</option>
+    <option>Saúde</option>
+    <option>Psicologia</option>
+    <option>Biologia</option>
+    <option>Tecnologia</option>
+    <option>Capitais</option>
+    <option>Frases famosas</option>
+  </select>
+</div>
 
-      <p id="questionText" class="question-text">Nenhuma pergunta ainda.</p>
-      <div id="answers" class="answers"></div>
+<div class="card">
+  <h2>Jogadores</h2>
 
-      <div class="toolbar">
-        <button class="btn btn-primary" id="generateBtn">Gerar pergunta</button>
-        <button class="btn btn-secondary" id="revealBtn">Mostrar resposta</button>
-      </div>
-    </section>
+  <input id="playerInput" placeholder="Nome do jogador">
+  <button class="secondary" onclick="addPlayer()">Adicionar</button>
 
-    <section class="card">
-      <h2 class="section-title">Eliminar jogadores</h2>
-      <p class="muted">Marque apenas quem errou a pergunta.</p>
-      <div id="eliminationList" class="elimination-list"></div>
-      <div style="margin-top: 14px;">
-        <button class="btn btn-danger" id="eliminateBtn">Eliminar selecionados</button>
-      </div>
-    </section>
+  <div id="players"></div>
+</div>
 
-    <section id="winnerCard" class="card winner hidden">
-      <div class="eyebrow">Fim do jogo</div>
-      <h2 id="winnerName">Vencedor</h2>
-      <p>Parabéns. Esse foi o último jogador restante.</p>
-    </section>
-  </main>
+<div class="card">
+  <button class="primary" onclick="generateQuestion()">Gerar pergunta</button>
+</div>
 
-  <script>
-    const players = [];
-    let currentQuestion = null;
-    let revealed = false;
+<div class="card hidden" id="quizCard">
+  <h2 id="question"></h2>
 
-    const playerInput = document.getElementById('playerInput');
-    const playersList = document.getElementById('playersList');
-    const eliminationList = document.getElementById('eliminationList');
-    const temaSelect = document.getElementById('tema');
-    const questionText = document.getElementById('questionText');
-    const answersDiv = document.getElementById('answers');
-    const statusText = document.getElementById('statusText');
-    const winnerCard = document.getElementById('winnerCard');
-    const winnerName = document.getElementById('winnerName');
+  <div id="answers"></div>
 
-    function renderPlayers() {
-      playersList.innerHTML = '';
-      eliminationList.innerHTML = '';
+  <button class="secondary" onclick="showAnswer()">Mostrar resposta</button>
 
-      if (!players.length) {
-        playersList.innerHTML = '<span class="muted">Nenhum jogador adicionado.</span>';
-        eliminationList.innerHTML = '<span class="muted">Adicione jogadores para começar.</span>';
-        return;
-      }
+  <p class="small" id="explanation"></p>
+</div>
 
-      players.forEach((name, index) => {
-        const chip = document.createElement('div');
-        chip.className = 'player-chip';
-        chip.innerHTML = `<span>${name}</span><button class="chip-remove" aria-label="Remover ${name}">×</button>`;
-        chip.querySelector('button').addEventListener('click', () => {
-          players.splice(index, 1);
-          checkWinner();
-          renderPlayers();
-        });
-        playersList.appendChild(chip);
+<div class="card hidden" id="elimCard">
+  <h2>Quem errou?</h2>
+  <div id="elimList"></div>
+  <button class="primary" onclick="eliminate()">Eliminar</button>
+</div>
 
-        const row = document.createElement('label');
-        row.className = 'elimination-item';
-        row.innerHTML = `<input type="checkbox" value="${name}" /><span>${name}</span>`;
-        eliminationList.appendChild(row);
-      });
-    }
+<div class="card hidden" id="winnerCard">
+  <h1 id="winner"></h1>
+  <button class="primary" onclick="location.reload()">Novo jogo</button>
+</div>
 
-    function addPlayer() {
-      const name = playerInput.value.trim();
-      if (!name) return;
-      players.push(name);
-      playerInput.value = '';
-      renderPlayers();
-    }
+</div>
 
-    async function generateQuestion() {
-      const tema = temaSelect.value;
-      statusText.textContent = 'Gerando pergunta...';
-      questionText.textContent = 'Aguarde um instante.';
-      answersDiv.innerHTML = '';
-      revealed = false;
+<script>
+let players = [];
+let correctIndex = 0;
+let explanationText = "";
 
-      try {
-        const response = await fetch('/api/generate-question', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tema })
-        });
+function addPlayer() {
+  let name = document.getElementById("playerInput").value.trim();
+  if (!name) return;
+  players.push(name);
+  document.getElementById("playerInput").value = "";
+  renderPlayers();
+}
 
-        if (!response.ok) throw new Error('Falha ao gerar pergunta');
+function renderPlayers() {
+  document.getElementById("players").innerHTML =
+    players.map(p => `<span class="chip">${p}</span>`).join("");
+}
 
-        const data = await response.json();
-        currentQuestion = data;
-        questionText.textContent = data.question;
-        statusText.textContent = `Tema atual: ${tema}`;
+async function generateQuestion() {
+  const tema = document.getElementById("tema").value;
 
-        data.options.forEach((option, index) => {
-          const btn = document.createElement('button');
-          btn.className = 'answer';
-          btn.textContent = option;
-          btn.addEventListener('click', () => markAnswer(index, btn));
-          answersDiv.appendChild(btn);
-        });
-      } catch (error) {
-        currentQuestion = null;
-        questionText.textContent = 'Não foi possível gerar a pergunta.';
-        statusText.textContent = 'Verifique a integração da API.';
-      }
-    }
+  const res = await fetch("/api/generate-question", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tema })
+  });
 
-    function markAnswer(index, btn) {
-      if (!currentQuestion || revealed) return;
-      const buttons = [...document.querySelectorAll('.answer')];
-      buttons.forEach((b) => b.disabled = true);
-      if (index === currentQuestion.correct) {
-        btn.classList.add('correct');
-      } else {
-        btn.classList.add('wrong');
-      }
-    }
+  const data = await res.json();
 
-    function revealAnswer() {
-      if (!currentQuestion) return;
-      revealed = true;
-      const buttons = [...document.querySelectorAll('.answer')];
-      buttons.forEach((b, index) => {
-        b.disabled = true;
-        if (index === currentQuestion.correct) b.classList.add('correct');
-      });
-    }
+  document.getElementById("quizCard").classList.remove("hidden");
+  document.getElementById("elimCard").classList.remove("hidden");
 
-    function eliminateSelected() {
-      const marked = [...document.querySelectorAll('#eliminationList input:checked')].map((el) => el.value);
-      if (!marked.length) return;
+  document.getElementById("question").innerText = data.question;
+  explanationText = data.explanation;
 
-      for (let i = players.length - 1; i >= 0; i--) {
-        if (marked.includes(players[i])) players.splice(i, 1);
-      }
+  correctIndex = data.correct;
 
-      renderPlayers();
-      checkWinner();
-    }
+  const answersDiv = document.getElementById("answers");
+  answersDiv.innerHTML = "";
 
-    function checkWinner() {
-      if (players.length === 1) {
-        winnerName.textContent = players[0];
-        winnerCard.classList.remove('hidden');
-      } else {
-        winnerCard.classList.add('hidden');
-      }
-    }
+  data.options.forEach((opt, i) => {
+    let btn = document.createElement("button");
+    btn.className = "answer";
+    btn.innerText = opt;
+    btn.onclick = () => selectAnswer(btn, i);
+    answersDiv.appendChild(btn);
+  });
 
-    document.getElementById('addPlayerBtn').addEventListener('click', addPlayer);
-    document.getElementById('generateBtn').addEventListener('click', generateQuestion);
-    document.getElementById('revealBtn').addEventListener('click', revealAnswer);
-    document.getElementById('eliminateBtn').addEventListener('click', eliminateSelected);
-    playerInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') addPlayer();
-    });
+  renderElimination();
+}
 
-    renderPlayers();
-  </script>
+function selectAnswer(btn, i) {
+  document.querySelectorAll(".answer").forEach(b => b.disabled = true);
+
+  if (i === correctIndex) {
+    btn.classList.add("correct");
+  } else {
+    btn.classList.add("wrong");
+  }
+}
+
+function showAnswer() {
+  document.querySelectorAll(".answer")[correctIndex].classList.add("correct");
+  document.getElementById("explanation").innerText = explanationText;
+}
+
+function renderElimination() {
+  document.getElementById("elimList").innerHTML =
+    players.map(p => `
+      <label>
+        <input type="checkbox" value="${p}"> ${p}
+      </label><br>
+    `).join("");
+}
+
+function eliminate() {
+  let selected = [...document.querySelectorAll("#elimList input:checked")]
+    .map(x => x.value);
+
+  players = players.filter(p => !selected.includes(p));
+
+  if (players.length === 1) {
+    document.getElementById("winnerCard").classList.remove("hidden");
+    document.getElementById("winner").innerText = "🏆 " + players[0];
+    return;
+  }
+
+  generateQuestion();
+}
+</script>
+
 </body>
 </html>
