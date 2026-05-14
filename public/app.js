@@ -151,37 +151,36 @@ function onClick(event) {
 }
 
 function onSubmit(event) {
-  if (event.target.id !== "player-form") {
-    return;
-  }
+  if (event.target.id === "player-form") {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const rawName = String(formData.get("playerName") || "").trim();
 
-  event.preventDefault();
-  const formData = new FormData(event.target);
-  const rawName = String(formData.get("playerName") || "").trim();
+    if (!rawName) {
+      state.error = "Digite um nome antes de adicionar o jogador.";
+      sync();
+      return;
+    }
 
-  if (!rawName) {
-    state.error = "Digite um nome antes de adicionar o jogador.";
+    const alreadyExists = state.players.some(
+      (player) => player.name.toLowerCase() === rawName.toLowerCase()
+    );
+
+    if (alreadyExists) {
+      state.error = "Esse nome já está na lista.";
+      sync();
+      return;
+    }
+
+    state.players.push({
+      id: createId(),
+      name: rawName.slice(0, 30),
+    });
+    state.error = "";
+    event.target.reset();
     sync();
     return;
   }
-
-  const alreadyExists = state.players.some(
-    (player) => player.name.toLowerCase() === rawName.toLowerCase()
-  );
-
-  if (alreadyExists) {
-    state.error = "Esse nome já está na lista.";
-    sync();
-    return;
-  }
-
-  state.players.push({
-    id: createId(),
-    name: rawName.slice(0, 30),
-  });
-  state.error = "";
-  event.target.reset();
-  sync();
 }
 
 function onChange(event) {
@@ -911,9 +910,11 @@ function loadState() {
     }
 
     const parsed = JSON.parse(raw);
+    const { localAiConfig: _legacyLocalAiConfig, ...storedState } = parsed;
+
     return {
       ...fallback,
-      ...parsed,
+      ...storedState,
       activePlayers: [],
       currentPlayerIndex: 0,
       currentQuestion: null,

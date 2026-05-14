@@ -1,34 +1,46 @@
 # Ultimo Sobrevivente
 
-App web mobile-first para um jogo de perguntas com eliminacao por rodada. Um anfitriao segura o celular, le as perguntas e marca quem acertou ou saiu.
+App web mobile-first para um jogo de perguntas com eliminacao por rodada. O fluxo certo de producao e:
 
-## Como rodar
+- GitHub guarda o codigo
+- Vercel hospeda o app
+- a chave da IA fica so nas variaveis do servidor
+- o usuario final abre apenas a URL publica
+
+## Estrutura do projeto
+
+- `public/`: interface web
+- `api/`: rotas serverless para Vercel
+- `lib/quiz-ai.mjs`: integracao compartilhada com Gemini/OpenAI
+- `server.mjs`: servidor local para desenvolvimento
+
+## Como rodar localmente
 
 Use Node 18+.
 
-1. Crie um arquivo `.env` na raiz do projeto baseado em `.env.example`
-2. Preencha sua chave da IA
-3. Rode o servidor
+1. Crie um arquivo `.env` na raiz com base em `.env.example`
+2. Preencha a chave
+3. Rode:
 
 ```bash
 node server.mjs
 ```
 
-Depois abra:
+Abra:
 
 ```text
 http://localhost:3000
 ```
 
-Exemplo de `.env` com Gemini Free Tier:
+Exemplo com Gemini:
 
 ```env
-AI_PROVIDER=auto
+AI_PROVIDER=gemini
 GEMINI_API_KEY=sua_chave_gemini_aqui
 GEMINI_MODEL=gemini-3.1-flash-lite
 ```
 
-Exemplo de `.env` com OpenAI:
+Exemplo com OpenAI:
 
 ```env
 AI_PROVIDER=openai
@@ -36,43 +48,71 @@ OPENAI_API_KEY=sua_chave_openai_aqui
 OPENAI_MODEL=gpt-5.4-mini
 ```
 
-## Abrir com dois cliques no macOS
+## O que vai para o GitHub
 
-Voce tambem pode dar dois cliques em `abrir-app.command`.
-Ele sobe o servidor e abre o navegador automaticamente.
+Suba o projeto inteiro, exceto `.env`.
 
-## Abrir no celular
+Arquivos importantes para o repo:
 
-O servidor agora sobe em `0.0.0.0` por padrao.
-Quando iniciar, o terminal mostra uma URL da rede local, como:
+- `index.html`
+- `public/`
+- `api/`
+- `lib/`
+- `server.mjs`
+- `.env.example`
+- `package.json`
+- `README.md`
+
+O `.env` real nao deve subir.
+
+## O que configurar na Vercel
+
+Ao importar o repo na Vercel:
+
+1. Selecione o repositório do GitHub
+2. Mantenha a raiz do projeto como Root Directory
+3. Em `Environment Variables`, adicione:
 
 ```text
-http://192.168.0.15:3000
+AI_PROVIDER = gemini
+GEMINI_API_KEY = sua_chave_gemini_aqui
+GEMINI_MODEL = gemini-3.1-flash-lite
 ```
 
-Abra essa URL no celular, desde que ele esteja na mesma rede Wi-Fi do computador.
+Se preferir OpenAI:
+
+```text
+AI_PROVIDER = openai
+OPENAI_API_KEY = sua_chave_openai_aqui
+OPENAI_MODEL = gpt-5.4-mini
+```
+
+Depois clique em `Deploy`.
+
+## Fluxo recomendado de publicacao
+
+1. Faça `git add .`
+2. Faça seu commit
+3. Dê `git push`
+4. A Vercel publica
+5. Se trocar a chave, altere só na Vercel, sem mexer no frontend
 
 ## Variaveis opcionais
 
-- `PORT`: porta do servidor. Padrao `3000`
-- `HOST`: host do servidor. Padrao `0.0.0.0`
 - `AI_PROVIDER`: `auto`, `gemini` ou `openai`
 - `GEMINI_API_KEY`: chave da Gemini API
 - `GEMINI_MODEL`: modelo Gemini. Padrao `gemini-3.1-flash-lite`
-- `OPENAI_MODEL`: modelo usado para gerar perguntas. Padrao `gpt-5.4-mini`
-- `OPENAI_BASE_URL`: endpoint base da API, caso voce use um gateway compativel
+- `OPENAI_API_KEY`: chave da OpenAI API
+- `OPENAI_MODEL`: modelo OpenAI. Padrao `gpt-5.4-mini`
+- `OPENAI_BASE_URL`: endpoint base compativel com OpenAI
+- `GEMINI_BASE_URL`: endpoint base compativel com Gemini
+- `PORT`: porta local. Padrao `3000`
+- `HOST`: host local. Padrao `0.0.0.0`
 
-## O que a primeira versao entrega
+## Abrir com dois cliques no macOS
 
-- cadastro de varios jogadores
-- escolha de tema a partir de uma lista grande ou por tema customizado
-- niveis facil, medio e dificil
-- rotacao automatica das rodadas
-- eliminacao imediata quando alguem erra
-- vencedor final quando sobra um jogador
-- geracao de perguntas por API de IA no backend, sem expor a chave no navegador
-- suporte a Gemini e OpenAI no mesmo backend
+Voce tambem pode dar dois cliques em `abrir-app.command`.
 
-## Observacao importante
+## Abrir no celular durante testes locais
 
-Se `OPENAI_API_KEY` nao estiver definida, a interface abre normalmente, mas a geracao das perguntas retorna erro ate a chave ser configurada.
+O servidor local sobe em `0.0.0.0` por padrao. Quando iniciar, o terminal mostra uma URL da rede local para abrir no celular, desde que ele esteja na mesma rede Wi-Fi.
