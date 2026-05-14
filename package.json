@@ -1,10 +1,8 @@
 {
-  "name": "trivia-elimination-ai",
-  "version": "1.0.0",
+  "name": "ultimo-sobrevivente-mobile",
   "private": true,
-  "description": "AI-powered elimination trivia game ready for GitHub + Vercel",
+  "type": "module",
   "scripts": {
-    "start": "npx serve public"
-  },
-  "dependencies": {}
+    "start": "node server.mjs"
+  }
 }

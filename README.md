@@ -1,39 +1,78 @@
-# Quiz de Eliminação com IA
+# Ultimo Sobrevivente
 
-Projeto pronto para subir no GitHub e publicar na Vercel, sem precisar rodar localmente.
+App web mobile-first para um jogo de perguntas com eliminacao por rodada. Um anfitriao segura o celular, le as perguntas e marca quem acertou ou saiu.
 
-## O que este app faz
+## Como rodar
 
-- Cadastro de jogadores
-- Escolha de tema e subtema
-- Geração online de perguntas interessantes com IA
-- 4 alternativas por pergunta
-- Revelação da resposta correta
-- Eliminação manual dos jogadores que erraram
-- Definição automática do vencedor
-- Salvamento do estado no navegador
+Use Node 18+.
 
-## Publicação sem instalar nada no computador
+1. Crie um arquivo `.env` na raiz do projeto baseado em `.env.example`
+2. Preencha sua chave da IA
+3. Rode o servidor
 
-### 1. Suba a pasta para um repositório no GitHub
-Pode ser arrastando os arquivos pela interface web do GitHub.
+```bash
+node server.mjs
+```
 
-### 2. Publique na Vercel
-- Entre na Vercel
-- Clique em **Add New Project**
-- Importe o repositório do GitHub
-- Em **Environment Variables**, crie:
-  - `OPENAI_API_KEY` = sua chave da OpenAI
-- Clique em **Deploy**
+Depois abra:
 
-Pronto. O app ficará online com frontend + backend serverless.
+```text
+http://localhost:3000
+```
 
-## Estrutura
+Exemplo de `.env` com Gemini Free Tier:
 
-- `public/` → site
-- `api/generate-question.js` → função serverless que chama a OpenAI
-- `vercel.json` → configuração da publicação
+```env
+AI_PROVIDER=auto
+GEMINI_API_KEY=sua_chave_gemini_aqui
+GEMINI_MODEL=gemini-3.1-flash-lite
+```
 
-## Observação importante
+Exemplo de `.env` com OpenAI:
 
-GitHub Pages sozinho não é suficiente para este caso, porque ele hospeda apenas arquivos estáticos. Como a chave da OpenAI precisa ficar protegida no servidor, a publicação recomendada aqui é **GitHub + Vercel**.
+```env
+AI_PROVIDER=openai
+OPENAI_API_KEY=sua_chave_openai_aqui
+OPENAI_MODEL=gpt-5.4-mini
+```
+
+## Abrir com dois cliques no macOS
+
+Voce tambem pode dar dois cliques em `abrir-app.command`.
+Ele sobe o servidor e abre o navegador automaticamente.
+
+## Abrir no celular
+
+O servidor agora sobe em `0.0.0.0` por padrao.
+Quando iniciar, o terminal mostra uma URL da rede local, como:
+
+```text
+http://192.168.0.15:3000
+```
+
+Abra essa URL no celular, desde que ele esteja na mesma rede Wi-Fi do computador.
+
+## Variaveis opcionais
+
+- `PORT`: porta do servidor. Padrao `3000`
+- `HOST`: host do servidor. Padrao `0.0.0.0`
+- `AI_PROVIDER`: `auto`, `gemini` ou `openai`
+- `GEMINI_API_KEY`: chave da Gemini API
+- `GEMINI_MODEL`: modelo Gemini. Padrao `gemini-3.1-flash-lite`
+- `OPENAI_MODEL`: modelo usado para gerar perguntas. Padrao `gpt-5.4-mini`
+- `OPENAI_BASE_URL`: endpoint base da API, caso voce use um gateway compativel
+
+## O que a primeira versao entrega
+
+- cadastro de varios jogadores
+- escolha de tema a partir de uma lista grande ou por tema customizado
+- niveis facil, medio e dificil
+- rotacao automatica das rodadas
+- eliminacao imediata quando alguem erra
+- vencedor final quando sobra um jogador
+- geracao de perguntas por API de IA no backend, sem expor a chave no navegador
+- suporte a Gemini e OpenAI no mesmo backend
+
+## Observacao importante
+
+Se `OPENAI_API_KEY` nao estiver definida, a interface abre normalmente, mas a geracao das perguntas retorna erro ate a chave ser configurada.

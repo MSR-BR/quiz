@@ -1,86 +1,24 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quiz de Eliminação</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div class="app-shell">
-    <header class="hero card">
-      <div>
-        <p class="eyebrow">Jogo em grupo</p>
-        <h1>Quiz de Eliminação com IA</h1>
-        <p class="lead">O coordenador escolhe o tema, a IA cria perguntas interessantes, os jogadores respondem em roda e quem errar sai.</p>
-      </div>
-      <button id="newGameBtn" class="secondary">Novo jogo</button>
-    </header>
-
-    <main class="grid">
-      <section class="card">
-        <h2>1. Configuração</h2>
-        <label>Tema geral</label>
-        <select id="category">
-          <option>História</option>
-          <option>Segunda Guerra Mundial</option>
-          <option>História do Brasil</option>
-          <option>Matemática</option>
-          <option>Ciências</option>
-          <option>Biologia</option>
-          <option>Direito</option>
-          <option>Frases famosas</option>
-          <option>Filosofia</option>
-          <option>Literatura</option>
-        </select>
-
-        <label>Subtema específico</label>
-        <input id="subtopic" placeholder="Ex.: Revolução de 1930, genética mendeliana, direito constitucional" />
-
-        <label>Nível</label>
-        <select id="difficulty">
-          <option value="medium">Médio</option>
-          <option value="hard">Difícil</option>
-          <option value="very hard">Muito difícil</option>
-        </select>
-      </section>
-
-      <section class="card">
-        <h2>2. Jogadores</h2>
-        <div class="row">
-          <input id="playerName" placeholder="Nome do jogador" />
-          <button id="addPlayerBtn">Adicionar</button>
-        </div>
-        <div id="playersList" class="players"></div>
-      </section>
-
-      <section class="card wide">
-        <div class="question-header">
-          <h2>3. Rodada</h2>
-          <button id="generateBtn">Gerar pergunta</button>
-        </div>
-        <div id="status" class="status">Adicione jogadores e gere a primeira pergunta.</div>
-        <div id="questionBox" class="hidden">
-          <p id="questionText" class="question"></p>
-          <div id="options" class="options"></div>
-          <div class="row wrap">
-            <button id="revealBtn" class="secondary">Revelar resposta</button>
-            <button id="nextBtn" class="hidden">Próxima pergunta</button>
-          </div>
-          <div id="answerBox" class="answer hidden"></div>
-        </div>
-      </section>
-
-      <section class="card wide">
-        <h2>4. Eliminação</h2>
-        <p class="small">Depois que a pessoa responder em voz alta, o coordenador marca abaixo quem errou. Quem errar sai do jogo.</p>
-        <div id="survivors" class="survivors"></div>
-        <button id="eliminateBtn" class="danger">Eliminar selecionados</button>
-        <div id="winnerBox" class="winner hidden"></div>
-      </section>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="App web mobile-first para jogo de perguntas com geração por IA."
+    />
+    <title>Ultimo Sobrevivente</title>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script defer src="/app.js"></script>
+  </head>
+  <body>
+    <div class="backdrop" aria-hidden="true"></div>
+    <main class="app-shell">
+      <div id="app"></div>
     </main>
-  </div>
-
-  <script src="app.js"></script>
-</body>
+  </body>
 </html>
