@@ -89,6 +89,19 @@ OPENAI_MODEL = gpt-5.4-mini
 
 Depois clique em `Deploy`.
 
+## Analytics da Vercel
+
+O projeto ja inclui a leitura basica do Vercel Web Analytics no HTML publicado.
+
+Para ativar no painel:
+
+1. Abra o projeto na Vercel
+2. Entre em `Analytics`
+3. Clique em `Enable`
+4. Faça um novo deploy ou `Redeploy`
+
+Em plano Hobby, o principal retorno sera visitantes e page views.
+
 ## Fluxo recomendado de publicacao
 
 1. Faça `git add .`

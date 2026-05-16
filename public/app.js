@@ -44,6 +44,7 @@ const DIFFICULTIES = [
 ];
 
 const STORAGE_KEY = "ultimo-sobrevivente-v1";
+const EMPTY_SELECTION = "";
 
 const state = loadState();
 const app = document.querySelector("#app");
@@ -87,9 +88,9 @@ function onClick(event) {
   }
 
   if (action === "reset-setup") {
-    const shouldReset = window.confirm("Limpar jogadores e configurações para recomeçar tudo?");
+    const shouldReset = window.confirm("Apagar jogadores, tema e nível e voltar ao estado inicial?");
     if (shouldReset) {
-      resetSetup();
+      resetAll();
     }
     return;
   }
@@ -132,9 +133,17 @@ function onClick(event) {
   }
 
   if (action === "restart-match") {
-    const shouldRestart = window.confirm("Recomeçar a partida do zero com os mesmos jogadores?");
+    const shouldRestart = window.confirm("Recomeçar a partida com os mesmos jogadores e configurações?");
     if (shouldRestart) {
       void restartMatch();
+    }
+    return;
+  }
+
+  if (action === "restart-all") {
+    const shouldRestart = window.confirm("Apagar jogadores, tema e nível e voltar ao estado inicial?");
+    if (shouldRestart) {
+      resetAll();
     }
     return;
   }
@@ -232,6 +241,12 @@ async function startGame() {
     return;
   }
 
+  if (!state.difficulty) {
+    state.error = "Escolha o nível da partida.";
+    sync();
+    return;
+  }
+
   state.status = "playing";
   state.round = 1;
   state.currentPlayerIndex = 0;
@@ -252,6 +267,27 @@ async function startGame() {
 
 async function restartMatch() {
   await startGame();
+}
+
+function resetAll() {
+  state.players = [];
+  state.selectedTheme = EMPTY_SELECTION;
+  state.customTheme = "";
+  state.difficulty = EMPTY_SELECTION;
+  state.activePlayers = [];
+  state.currentPlayerIndex = 0;
+  state.currentQuestion = null;
+  state.eliminatedPlayers = [];
+  state.error = "";
+  state.loadingQuestion = false;
+  state.recentQuestions = [];
+  state.revealAnswer = false;
+  state.round = 1;
+  state.showHint = false;
+  state.status = "setup";
+  state.timeline = [];
+  state.winner = null;
+  sync();
 }
 
 async function fetchQuestion() {
@@ -397,6 +433,7 @@ function render() {
 
 function renderSetup() {
   const selectedTheme = getSelectedTheme() || "Escolha um tema";
+  const selectedDifficulty = state.difficulty ? formatDifficulty(state.difficulty) : "Escolha o nível";
   const canStart = state.players.length >= 2 && Boolean(getSelectedTheme());
 
   return `
@@ -489,7 +526,7 @@ function renderSetup() {
       <section class="section-card">
         <div class="section-head">
           <h2 class="section-title">Nível</h2>
-          <span class="section-note">${escapeHtml(formatDifficulty(state.difficulty))}</span>
+          <span class="section-note">${escapeHtml(selectedDifficulty)}</span>
         </div>
         <div class="difficulty-grid">
           ${DIFFICULTIES.map((difficulty) => renderDifficultyChip(difficulty)).join("")}
@@ -532,12 +569,12 @@ function renderSetup() {
           type="button"
           class="button button-primary button-large"
           data-action="start-game"
-          ${canStart ? "" : "disabled"}
+          ${canStart && state.difficulty ? "" : "disabled"}
         >
           Começar jogo
         </button>
         ${
-          state.players.length || state.customTheme || state.selectedTheme !== "Futebol" || state.difficulty !== "medio"
+          state.players.length || state.customTheme || state.selectedTheme || state.difficulty
             ? `
               <button
                 type="button"
@@ -696,8 +733,11 @@ function renderGame() {
                   </button>
                 `
         }
-        <button type="button" class="button button-ghost" data-action="restart-match">
-          Recomeçar partida
+        <button type="button" class="button button-secondary" data-action="restart-match">
+          Reiniciar com mesmos jogadores
+        </button>
+        <button type="button" class="button button-ghost" data-action="restart-all">
+          Reiniciar geral
         </button>
       </div>
 
@@ -830,10 +870,10 @@ function renderFinished() {
 
       <div class="winner-actions">
         <button type="button" class="button button-primary button-large" data-action="play-again">
-          Recomeçar partida
+          Reiniciar com mesmos jogadores
         </button>
-        <button type="button" class="button button-secondary" data-action="back-to-setup">
-          Voltar para configuração
+        <button type="button" class="button button-ghost" data-action="restart-all">
+          Reiniciar geral
         </button>
       </div>
     </section>
@@ -888,7 +928,7 @@ function loadState() {
     currentPlayerIndex: 0,
     currentQuestion: null,
     customTheme: "",
-    difficulty: "medio",
+    difficulty: EMPTY_SELECTION,
     eliminatedPlayers: [],
     error: "",
     loadingQuestion: false,
@@ -896,7 +936,7 @@ function loadState() {
     recentQuestions: [],
     revealAnswer: false,
     round: 1,
-    selectedTheme: "Futebol",
+    selectedTheme: EMPTY_SELECTION,
     showHint: false,
     status: "setup",
     timeline: [],
