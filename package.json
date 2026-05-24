@@ -2,6 +2,9 @@
   "name": "ultimo-sobrevivente-mobile",
   "private": true,
   "type": "module",
+  "dependencies": {
+    "@vercel/analytics": "latest"
+  },
   "scripts": {
     "dev": "node server.mjs",
     "start": "node server.mjs"

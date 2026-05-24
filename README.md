@@ -102,6 +102,47 @@ Para ativar no painel:
 
 Em plano Hobby, o principal retorno sera visitantes e page views.
 
+### Eventos do produto
+
+O app agora tambem emite estes eventos de produto:
+
+- `partida_iniciada`
+- `pergunta_gerada`
+- `erro`
+- `partida_finalizada`
+
+Esses eventos passam por `/api/events`.
+
+Observacao pratica:
+
+- em qualquer ambiente, eles alimentam o painel interno `/ops.html`
+- na Vercel, os eventos customizados dependem do suporte do plano e da instalacao de `@vercel/analytics`
+
+## Painel operacional
+
+Para acompanhar a saude do app:
+
+- `GET /api/status`: status basico da IA
+- `GET /api/ops`: resumo de operacao, fallback, falhas e volume da IA
+- `GET /ops.html`: visor simples para acompanhar o JSON operacional
+
+O monitoramento inclui:
+
+- perguntas servidas por `ai`, `cache` e `fallback`
+- falhas recentes da IA
+- contagem de eventos de produto
+- tokens de entrada e saida
+- custo estimado quando as tarifas forem configuradas
+
+## Politica de privacidade e suporte
+
+Páginas publicas incluidas:
+
+- `/privacy.html`
+- `/support.html`
+
+Elas ajudam no compartilhamento publico e deixam o deploy com base minima operacional.
+
 ## Fluxo recomendado de publicacao
 
 1. Faça `git add .`
@@ -119,6 +160,10 @@ Em plano Hobby, o principal retorno sera visitantes e page views.
 - `OPENAI_MODEL`: modelo OpenAI. Padrao `gpt-5.4-mini`
 - `OPENAI_BASE_URL`: endpoint base compativel com OpenAI
 - `GEMINI_BASE_URL`: endpoint base compativel com Gemini
+- `OPENAI_INPUT_COST_PER_1M`: custo de entrada por 1 milhao de tokens para estimativa
+- `OPENAI_OUTPUT_COST_PER_1M`: custo de saida por 1 milhao de tokens para estimativa
+- `GEMINI_INPUT_COST_PER_1M`: custo de entrada por 1 milhao de tokens para estimativa
+- `GEMINI_OUTPUT_COST_PER_1M`: custo de saida por 1 milhao de tokens para estimativa
 - `PORT`: porta local. Padrao `3000`
 - `HOST`: host local. Padrao `0.0.0.0`
 
@@ -129,3 +174,22 @@ Voce tambem pode dar dois cliques em `abrir-app.command`.
 ## Abrir no celular durante testes locais
 
 O servidor local sobe em `0.0.0.0` por padrao. Quando iniciar, o terminal mostra uma URL da rede local para abrir no celular, desde que ele esteja na mesma rede Wi-Fi.
+
+## Checklist mobile
+
+Teste pelo menos estes fluxos em:
+
+- Safari no iPhone
+- Chrome no Android
+
+Checklist:
+
+- abrir pelo link direto
+- abrir pelo preview do WhatsApp
+- cadastrar jogadores
+- iniciar partida
+- mostrar resposta
+- marcar acerto e erro
+- reiniciar com mesmos jogadores
+- reiniciar geral
+- chegar ate a tela final

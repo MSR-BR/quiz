@@ -45,6 +45,7 @@ const DIFFICULTIES = [
 
 const STORAGE_KEY = "ultimo-sobrevivente-v1";
 const EMPTY_SELECTION = "";
+const APP_SESSION_ID = createId();
 
 const state = loadState();
 const app = document.querySelector("#app");
@@ -124,6 +125,11 @@ function onClick(event) {
 
   if (action === "mark-wrong") {
     void finishTurn(true);
+    return;
+  }
+
+  if (action === "continue-next-turn") {
+    void advanceToNextTurn();
     return;
   }
 
@@ -221,6 +227,7 @@ function resetSetup() {
   state.round = 1;
   state.showHint = false;
   state.status = "setup";
+  state.turnFeedback = null;
   state.timeline = [];
   state.winner = null;
   sync();
@@ -257,10 +264,18 @@ async function startGame() {
   state.revealAnswer = false;
   state.showHint = false;
   state.loadingQuestion = false;
+  state.processingTurn = false;
+  state.turnFeedback = null;
   state.winner = null;
   state.error = "";
   state.recentQuestions = [];
   sync();
+  void trackProductEvent("partida_iniciada", {
+    difficulty: state.difficulty,
+    players_count: state.players.length,
+    session_id: APP_SESSION_ID,
+    theme: getSelectedTheme() || "Tema livre",
+  });
 
   await fetchQuestion();
 }
@@ -285,6 +300,7 @@ function resetAll() {
   state.round = 1;
   state.showHint = false;
   state.status = "setup";
+  state.turnFeedback = null;
   state.timeline = [];
   state.winner = null;
   sync();
@@ -297,6 +313,7 @@ async function fetchQuestion() {
   }
 
   state.loadingQuestion = true;
+  state.processingTurn = false;
   state.error = "";
   state.revealAnswer = false;
   state.showHint = false;
@@ -324,9 +341,35 @@ async function fetchQuestion() {
 
     state.currentQuestion = payload;
     state.recentQuestions = [...state.recentQuestions.slice(-9), payload.question];
+    if (payload.source === "fallback" && payload.fallbackReason) {
+      void trackProductEvent("erro", {
+        difficulty: state.difficulty,
+        reason: payload.fallbackReason,
+        round: state.round,
+        scope: "ia",
+        session_id: APP_SESSION_ID,
+        theme: getSelectedTheme() || "Tema livre",
+      });
+    }
+    void trackProductEvent("pergunta_gerada", {
+      difficulty: payload.difficulty || state.difficulty,
+      provider: payload.provider || "unknown",
+      round: state.round,
+      session_id: APP_SESSION_ID,
+      source: payload.source || "unknown",
+      theme: payload.theme || getSelectedTheme() || "Tema livre",
+    });
   } catch (error) {
     state.currentQuestion = null;
     state.error = error instanceof Error ? error.message : "Falha inesperada.";
+    void trackProductEvent("erro", {
+      difficulty: state.difficulty,
+      reason: state.error,
+      round: state.round,
+      scope: "question_request",
+      session_id: APP_SESSION_ID,
+      theme: getSelectedTheme() || "Tema livre",
+    });
   } finally {
     state.loadingQuestion = false;
     sync();
@@ -335,19 +378,29 @@ async function fetchQuestion() {
 
 async function finishTurn(eliminatePlayer) {
   const currentPlayer = state.activePlayers[state.currentPlayerIndex];
-  if (!currentPlayer || !state.currentQuestion) {
+  if (!currentPlayer || !state.currentQuestion || state.processingTurn) {
     return;
   }
 
+  state.processingTurn = true;
+
   const roundLabel = `Rodada ${state.round}`;
   const questionTheme = state.currentQuestion.theme || getSelectedTheme();
+  const resolvedAnswer = state.currentQuestion.answer;
+  const resolvedExplanation = state.currentQuestion.explanation;
+  const currentQuestionText = state.currentQuestion.question;
+  let nextPlayerName = "";
+  let turnFeedbackTone = eliminatePlayer ? "danger" : "success";
+  let feedbackTitle = "";
+  let feedbackCopy = "";
+  let feedbackBadge = "";
 
   if (eliminatePlayer) {
     state.timeline.unshift({
       id: createId(),
       kind: "danger",
       title: `${roundLabel}: ${currentPlayer.name} foi eliminado`,
-      copy: `Tema ${questionTheme}. A resposta correta era: ${state.currentQuestion.answer}.`,
+      copy: `Tema ${questionTheme}. A resposta correta era: ${resolvedAnswer}.`,
     });
 
     const [removedPlayer] = state.activePlayers.splice(state.currentPlayerIndex, 1);
@@ -355,6 +408,10 @@ async function finishTurn(eliminatePlayer) {
       ...removedPlayer,
       round: state.round,
     });
+
+    feedbackTitle = `${currentPlayer.name} saiu da partida`;
+    feedbackCopy = `A resposta correta era ${resolvedAnswer}. ${state.activePlayers.length > 1 ? "O jogo continua com o próximo participante." : ""}`.trim();
+    feedbackBadge = "Eliminado";
   } else {
     state.timeline.unshift({
       id: createId(),
@@ -364,20 +421,33 @@ async function finishTurn(eliminatePlayer) {
     });
 
     state.currentPlayerIndex += 1;
+
+    feedbackTitle = `${currentPlayer.name} acertou`;
+    feedbackCopy = `A resposta correta era ${resolvedAnswer}. Vamos girar para o próximo jogador.`;
+    feedbackBadge = "Acerto";
   }
 
   if (state.activePlayers.length === 1) {
     state.winner = state.activePlayers[0];
     state.status = "finished";
     state.currentQuestion = null;
+    state.processingTurn = false;
     state.revealAnswer = false;
     state.showHint = false;
+    state.turnFeedback = null;
 
     state.timeline.unshift({
       id: createId(),
       kind: "winner",
       title: `${state.winner.name} venceu a partida`,
       copy: `Sobrou apenas um jogador depois de ${state.round} rodada(s).`,
+    });
+    void trackProductEvent("partida_finalizada", {
+      difficulty: state.difficulty,
+      eliminated_players: state.eliminatedPlayers.length,
+      rounds: state.round,
+      session_id: APP_SESSION_ID,
+      theme: getSelectedTheme() || "Tema livre",
     });
 
     sync();
@@ -389,11 +459,30 @@ async function finishTurn(eliminatePlayer) {
     state.round += 1;
   }
 
+  nextPlayerName = state.activePlayers[state.currentPlayerIndex]?.name || "";
   state.currentQuestion = null;
   state.revealAnswer = false;
   state.showHint = false;
+  state.turnFeedback = {
+    badge: feedbackBadge,
+    copy: feedbackCopy,
+    explanation: resolvedExplanation,
+    nextPlayerName,
+    questionTheme,
+    questionText: currentQuestionText,
+    title: feedbackTitle,
+    tone: turnFeedbackTone,
+  };
   sync();
+}
 
+async function advanceToNextTurn() {
+  if (state.loadingQuestion) {
+    return;
+  }
+
+  state.turnFeedback = null;
+  sync();
   await fetchQuestion();
 }
 
@@ -418,6 +507,11 @@ function sync() {
 }
 
 function render() {
+  if (state.turnFeedback) {
+    app.innerHTML = renderTurnFeedback();
+    return;
+  }
+
   if (state.status === "playing") {
     app.innerHTML = renderGame();
     return;
@@ -587,12 +681,19 @@ function renderSetup() {
             : ""
         }
       </div>
+
+      ${renderFooterLinks()}
     </section>
   `;
 }
 
 function renderGame() {
   const currentPlayer = state.activePlayers[state.currentPlayerIndex];
+  const activeQuestionSource = state.currentQuestion?.source === "fallback"
+    ? "Pergunta reserva"
+    : state.currentQuestion?.source === "cache"
+      ? "Pergunta pronta"
+      : "Pergunta da vez";
 
   return `
     <section class="screen">
@@ -627,8 +728,9 @@ function renderGame() {
       </section>
 
       <section class="question-card">
-        <div class="question-label">Pergunta da vez</div>
+        <div class="question-label">${escapeHtml(activeQuestionSource)}</div>
         <h2 class="question-player">${escapeHtml(currentPlayer?.name || "Jogador")}</h2>
+        <p class="question-turn-copy">Quem segura o celular lê em voz alta. Depois marque se a resposta estava certa ou errada.</p>
         ${
           state.loadingQuestion
             ? `
@@ -696,7 +798,7 @@ function renderGame() {
           ? `
             <section class="error-card">
               <strong>Falha ao buscar a pergunta</strong>
-              <p class="section-copy">${escapeHtml(state.error)}</p>
+              <p class="section-copy">${escapeHtml(formatQuestionError(state.error))}</p>
             </section>
           `
           : ""
@@ -718,10 +820,10 @@ function renderGame() {
               : state.currentQuestion
                 ? `
                   <button type="button" class="button button-primary button-large" data-action="mark-correct">
-                    Acertou e continua
+                    Respondeu certo
                   </button>
                   <button type="button" class="button button-danger button-large" data-action="mark-wrong">
-                    Errou e sai do jogo
+                    Errou e sai
                   </button>
                   <button type="button" class="button button-secondary" data-action="swap-question">
                     Gerar outra pergunta
@@ -733,12 +835,6 @@ function renderGame() {
                   </button>
                 `
         }
-        <button type="button" class="button button-secondary" data-action="restart-match">
-          Reiniciar com mesmos jogadores
-        </button>
-        <button type="button" class="button button-ghost" data-action="restart-all">
-          Reiniciar geral
-        </button>
       </div>
 
       <section class="order-card">
@@ -794,6 +890,56 @@ function renderGame() {
             : `<div class="empty-state"><p class="empty-copy">Os eventos da partida aparecem aqui conforme o jogo avança.</p></div>`
         }
       </section>
+
+      ${renderMatchControls("Ajustes da partida")}
+      ${renderFooterLinks()}
+    </section>
+  `;
+}
+
+function renderTurnFeedback() {
+  const feedback = state.turnFeedback;
+  const toneClass = feedback?.tone === "danger" ? "turn-card--danger" : "turn-card--success";
+
+  return `
+    <section class="screen">
+      <section class="hero-card">
+        <div class="eyebrow">Resultado da rodada</div>
+        <h1 class="hero-title">${escapeHtml(feedback?.title || "Próxima rodada")}</h1>
+        <p class="hero-copy">${escapeHtml(feedback?.copy || "")}</p>
+        <div class="meta-row">
+          <span class="meta-pill meta-pill--primary">Rodada ${state.round}</span>
+          <span class="meta-pill">${escapeHtml(feedback?.questionTheme || getSelectedTheme() || "Tema livre")}</span>
+          <span class="meta-pill meta-pill--accent">${escapeHtml(feedback?.badge || "Atualização")}</span>
+        </div>
+      </section>
+
+      <section class="turn-card ${toneClass}">
+        <div class="turn-card__label">Próximo passo</div>
+        <h2 class="turn-card__title">${escapeHtml(feedback?.nextPlayerName || "Continuar a partida")}</h2>
+        <p class="turn-card__copy">
+          ${feedback?.nextPlayerName
+            ? `${escapeHtml(feedback.nextPlayerName)} será o próximo a responder.`
+            : "A partida continua na próxima jogada."}
+        </p>
+        <div class="turn-card__answer">
+          <strong>Resposta confirmada</strong>
+          <p>${escapeHtml(feedback?.explanation || "")}</p>
+        </div>
+        <div class="meta-row turn-card__stats">
+          <span class="meta-pill meta-pill--primary">${state.activePlayers.length} vivos</span>
+          <span class="meta-pill meta-pill--accent">${state.eliminatedPlayers.length} eliminados</span>
+        </div>
+      </section>
+
+      <div class="game-actions">
+        <button type="button" class="button button-primary button-large" data-action="continue-next-turn">
+          Continuar para o próximo jogador
+        </button>
+      </div>
+
+      ${renderMatchControls("Se quiser reiniciar")}
+      ${renderFooterLinks()}
     </section>
   `;
 }
@@ -868,6 +1014,15 @@ function renderFinished() {
         }
       </section>
 
+      <section class="hero-card winner-highlight">
+        <div class="eyebrow">Fechamento</div>
+        <h2 class="section-title">Partida encerrada</h2>
+        <p class="hero-copy">
+          Tema ${escapeHtml(getSelectedTheme() || "livre")} em nível ${escapeHtml(formatDifficulty(state.difficulty))}. 
+          ${escapeHtml(state.winner?.name || "O vencedor")} foi o último a ficar em pé.
+        </p>
+      </section>
+
       <div class="winner-actions">
         <button type="button" class="button button-primary button-large" data-action="play-again">
           Reiniciar com mesmos jogadores
@@ -876,7 +1031,37 @@ function renderFinished() {
           Reiniciar geral
         </button>
       </div>
+
+      ${renderFooterLinks()}
     </section>
+  `;
+}
+
+function renderMatchControls(title = "Controles da partida") {
+  return `
+    <section class="section-card control-card">
+      <div class="section-head">
+        <h2 class="section-title">${escapeHtml(title)}</h2>
+      </div>
+      <p class="section-copy">Use estes controles só se quiser zerar a rodada atual ou voltar ao começo.</p>
+      <div class="control-actions">
+        <button type="button" class="button button-secondary" data-action="restart-match">
+          Reiniciar com mesmos jogadores
+        </button>
+        <button type="button" class="button button-ghost" data-action="restart-all">
+          Reiniciar geral
+        </button>
+      </div>
+    </section>
+  `;
+}
+
+function renderFooterLinks() {
+  return `
+    <footer class="screen-footer">
+      <a class="footer-link" href="/privacy.html">Privacidade</a>
+      <a class="footer-link" href="/support.html">Suporte</a>
+    </footer>
   `;
 }
 
@@ -932,6 +1117,7 @@ function loadState() {
     eliminatedPlayers: [],
     error: "",
     loadingQuestion: false,
+    processingTurn: false,
     players: [],
     recentQuestions: [],
     revealAnswer: false,
@@ -939,6 +1125,7 @@ function loadState() {
     selectedTheme: EMPTY_SELECTION,
     showHint: false,
     status: "setup",
+    turnFeedback: null,
     timeline: [],
     winner: null,
   };
@@ -961,11 +1148,13 @@ function loadState() {
       eliminatedPlayers: [],
       error: "",
       loadingQuestion: false,
+      processingTurn: false,
       recentQuestions: [],
       revealAnswer: false,
       round: 1,
       showHint: false,
       status: "setup",
+      turnFeedback: null,
       timeline: [],
       winner: null,
     };
@@ -1003,4 +1192,40 @@ function escapeHtml(value) {
 
 function escapeAttribute(value) {
   return escapeHtml(value).replaceAll("`", "&#96;");
+}
+
+function formatQuestionError(message) {
+  const normalizedMessage = String(message || "").trim();
+
+  if (!normalizedMessage) {
+    return "Houve um problema ao buscar a próxima pergunta.";
+  }
+
+  if (/missing_api_key|invalid_api_key|quota|billing|rate_limit|timeout|fallback/i.test(normalizedMessage)) {
+    return "A próxima rodada usou o modo de segurança para não travar a partida. Você ainda pode continuar jogando normalmente.";
+  }
+
+  return normalizedMessage;
+}
+
+function trackProductEvent(name, properties = {}) {
+  const payload = JSON.stringify({
+    name,
+    properties,
+  });
+
+  try {
+    void fetch("/api/events", {
+      body: payload,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      keepalive: true,
+      method: "POST",
+    });
+  } catch {
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon("/api/events", new Blob([payload], { type: "application/json" }));
+    }
+  }
 }

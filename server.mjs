@@ -3,7 +3,9 @@ import { readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { getStatusPayload, resolveQuestionRequest } from "./lib/quiz-ai.mjs";
+import { getMonitoringConfig, getStatusPayload, resolveQuestionRequest } from "./lib/quiz-ai.mjs";
+import { getOpsSnapshot } from "./lib/ops-monitor.mjs";
+import { trackServerEvent } from "./lib/server-analytics.mjs";
 
 process.loadEnvFile?.(".env");
 
@@ -29,8 +31,21 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, getStatusPayload());
     }
 
+    if (req.method === "GET" && url.pathname === "/api/ops") {
+      return sendJson(res, 200, {
+        generatedAt: new Date().toISOString(),
+        monitoring: getMonitoringConfig(),
+        ops: getOpsSnapshot(),
+        status: getStatusPayload(),
+      });
+    }
+
     if (req.method === "POST" && url.pathname === "/api/questions") {
       return handleQuestionRequest(req, res);
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/events") {
+      return handleEventRequest(req, res);
     }
 
     if (req.method === "GET") {
@@ -87,6 +102,18 @@ async function handleQuestionRequest(req, res) {
   return sendJson(res, result.status, result.payload);
 }
 
+async function handleEventRequest(req, res) {
+  const body = await readJsonBody(req);
+  const name = sanitizeText(body?.name, 80);
+
+  if (!name) {
+    return sendJson(res, 400, { error: "Evento inválido." });
+  }
+
+  await trackServerEvent(name, sanitizeProperties(body?.properties));
+  return sendJson(res, 202, { ok: true });
+}
+
 function sendJson(res, statusCode, payload) {
   res.writeHead(statusCode, {
     "Content-Type": "application/json; charset=utf-8",
@@ -112,6 +139,34 @@ async function readJsonBody(req) {
   }
 
   return JSON.parse(Buffer.concat(chunks).toString("utf-8"));
+}
+
+function sanitizeProperties(value) {
+  const source = value && typeof value === "object" ? value : {};
+  const entries = Object.entries(source).slice(0, 20);
+
+  return Object.fromEntries(
+    entries.map(([key, propertyValue]) => [sanitizeText(key, 60), normalizePropertyValue(propertyValue)])
+  );
+}
+
+function normalizePropertyValue(value) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  return sanitizeText(value, 180);
+}
+
+function sanitizeText(value, maxLength) {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxLength);
 }
 
 async function serveStaticFile(requestPath, res) {

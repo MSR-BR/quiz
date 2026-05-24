@@ -77,7 +77,8 @@ button {
 .status-card,
 .timeline-card,
 .order-card,
-.error-card {
+.error-card,
+.turn-card {
   background: var(--card);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.6);
@@ -94,7 +95,8 @@ button {
 .question-card,
 .timeline-card,
 .order-card,
-.error-card {
+.error-card,
+.turn-card {
   padding: 18px;
 }
 
@@ -144,6 +146,13 @@ button {
   text-wrap: pretty;
 }
 
+.question-turn-copy {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
 .hero-tags,
 .meta-row,
 .question-meta,
@@ -189,6 +198,12 @@ button {
   background: rgba(196, 138, 23, 0.14);
   color: #7c5908;
   border-color: transparent;
+}
+
+.winner-highlight {
+  background:
+    radial-gradient(circle at top right, rgba(196, 138, 23, 0.2), transparent 35%),
+    rgba(255, 252, 246, 0.9);
 }
 
 .server-banner {
@@ -378,9 +393,35 @@ button {
 .button-row,
 .footer-actions,
 .game-actions,
-.winner-actions {
+.winner-actions,
+.control-actions {
   display: grid;
   gap: 10px;
+}
+
+.screen-footer,
+.page-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.screen-footer {
+  justify-content: center;
+  padding: 4px 0 10px;
+}
+
+.footer-link,
+.page-link {
+  color: var(--primary-strong);
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.footer-link:hover,
+.page-link:hover {
+  text-decoration: underline;
 }
 
 .button {
@@ -442,6 +483,24 @@ button {
   border-color: rgba(242, 106, 75, 0.18);
 }
 
+.turn-card {
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.turn-card--success {
+  border-color: rgba(13, 124, 134, 0.24);
+  background:
+    radial-gradient(circle at top right, rgba(13, 124, 134, 0.12), transparent 28%),
+    rgba(245, 255, 254, 0.95);
+}
+
+.turn-card--danger {
+  border-color: rgba(242, 106, 75, 0.24);
+  background:
+    radial-gradient(circle at top right, rgba(242, 106, 75, 0.13), transparent 28%),
+    rgba(255, 248, 245, 0.95);
+}
+
 .game-grid,
 .winner-grid {
   display: grid;
@@ -487,6 +546,123 @@ button {
   font-size: clamp(1.18rem, 4.8vw, 1.45rem);
   line-height: 1.28;
   text-wrap: pretty;
+}
+
+.turn-card__label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(24, 35, 50, 0.06);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.turn-card__title {
+  margin: 14px 0 0;
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", "Avenir Next", sans-serif;
+  font-size: clamp(1.6rem, 6vw, 2.1rem);
+  line-height: 1;
+}
+
+.turn-card__copy {
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.turn-card__answer {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.turn-card__answer strong {
+  display: block;
+  font-size: 0.96rem;
+}
+
+.turn-card__answer p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.turn-card__stats {
+  margin-top: 16px;
+}
+
+.control-card {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.legal-shell {
+  position: relative;
+  width: min(100%, 720px);
+  margin: 0 auto;
+  min-height: 100svh;
+  padding: 18px 16px var(--safe-bottom);
+}
+
+.legal-card {
+  padding: 22px;
+  background: var(--card);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow);
+}
+
+.legal-card + .legal-card {
+  margin-top: 14px;
+}
+
+.legal-copy,
+.legal-list,
+.legal-meta {
+  margin-top: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.legal-list {
+  padding-left: 18px;
+}
+
+.legal-list li + li {
+  margin-top: 10px;
+}
+
+.ops-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.ops-panel {
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.ops-panel pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.ops-note {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 0.92rem;
 }
 
 .hint-box,
@@ -639,7 +815,8 @@ button {
   .winner-card,
   .timeline-card,
   .order-card,
-  .error-card {
+  .error-card,
+  .turn-card {
     padding: 16px;
     border-radius: 24px;
   }
