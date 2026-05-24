@@ -12,6 +12,7 @@
     <link rel="canonical" href="https://quiz-ashy-five.vercel.app/support.html" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
+    <script defer src="/support.js"></script>
   </head>
   <body>
     <div class="backdrop" aria-hidden="true"></div>
@@ -30,34 +31,60 @@
       </section>
 
       <section class="legal-card">
-        <h2 class="section-title">Envie este checklist</h2>
-        <ul class="legal-list">
-          <li>tema escolhido</li>
-          <li>nível da partida</li>
-          <li>quantos jogadores estavam ativos</li>
-          <li>print da tela ou texto do erro</li>
-          <li>link da versão usada</li>
-          <li>modelo do celular e navegador, se possível</li>
-        </ul>
-      </section>
-
-      <section class="legal-card">
-        <h2 class="section-title">Testes recomendados</h2>
-        <ul class="legal-list">
-          <li>Safari no iPhone</li>
-          <li>Chrome no Android</li>
-          <li>abertura do link pelo WhatsApp</li>
-          <li>troca de tema, início da partida, eliminação, reinício e tela final</li>
-        </ul>
-      </section>
-
-      <section class="legal-card">
-        <h2 class="section-title">Painel operacional</h2>
+        <h2 class="section-title">Fale com o suporte</h2>
         <p class="legal-copy">
-          Para acompanhar saúde, contagem de eventos, fallback e volume de IA, use o painel interno em
-          <a class="page-link" href="/ops.html">/ops.html</a>.
+          Envie sua dúvida ou relato diretamente por aqui. A mensagem vai direto para a caixa de suporte.
         </p>
+
+        <form id="support-form" class="legal-form">
+          <div class="field-stack">
+            <label class="field-label" for="support-email">Seu email</label>
+            <input
+              id="support-email"
+              class="text-input"
+              type="email"
+              name="email"
+              maxlength="120"
+              autocomplete="email"
+              placeholder="voce@exemplo.com"
+              required
+            />
+          </div>
+
+          <div class="field-stack">
+            <label class="field-label" for="support-subject">Assunto</label>
+            <input
+              id="support-subject"
+              class="text-input"
+              type="text"
+              name="subject"
+              maxlength="120"
+              placeholder="Ex.: Problema ao gerar pergunta"
+              required
+            />
+          </div>
+
+          <div class="field-stack">
+            <label class="field-label" for="support-message">Mensagem</label>
+            <textarea
+              id="support-message"
+              class="textarea-input"
+              name="message"
+              maxlength="4000"
+              placeholder="Descreva o que aconteceu, em qual tema e em qual etapa da partida."
+              required
+            ></textarea>
+          </div>
+
+          <div class="control-actions">
+            <button type="submit" class="button button-primary button-large">Enviar mensagem</button>
+          </div>
+        </form>
+
+        <div id="support-status" class="support-status support-status--neutral"></div>
       </section>
+
+      <footer class="legal-footer">Desenvolvido por Mario Reis</footer>
     </main>
   </body>
 </html>

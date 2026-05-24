@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { getMonitoringConfig, getStatusPayload, resolveQuestionRequest } from "./lib/quiz-ai.mjs";
 import { getOpsSnapshot } from "./lib/ops-monitor.mjs";
 import { trackServerEvent } from "./lib/server-analytics.mjs";
+import { sendSupportMessage } from "./lib/support-mailer.mjs";
 
 process.loadEnvFile?.(".env");
 
@@ -46,6 +47,10 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === "POST" && url.pathname === "/api/events") {
       return handleEventRequest(req, res);
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/support") {
+      return handleSupportRequest(req, res);
     }
 
     if (req.method === "GET") {
@@ -112,6 +117,12 @@ async function handleEventRequest(req, res) {
 
   await trackServerEvent(name, sanitizeProperties(body?.properties));
   return sendJson(res, 202, { ok: true });
+}
+
+async function handleSupportRequest(req, res) {
+  const body = await readJsonBody(req);
+  const result = await sendSupportMessage(body);
+  return sendJson(res, result.status, result.payload);
 }
 
 function sendJson(res, statusCode, payload) {

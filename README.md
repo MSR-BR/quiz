@@ -143,6 +143,22 @@ Páginas publicas incluidas:
 
 Elas ajudam no compartilhamento publico e deixam o deploy com base minima operacional.
 
+### Envio direto pela pagina de suporte
+
+O formulario de `/support.html` envia a mensagem pelo backend para `mario.reis.junior@gmail.com`, sem abrir aplicativo de email.
+
+Para funcionar na Vercel, configure:
+
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_SECURE`
+- `SMTP_USER`
+- `SMTP_PASS`
+- `SUPPORT_FROM_EMAIL`
+- `SUPPORT_TO_EMAIL`
+
+Se usar Gmail como remetente, o caminho pratico costuma ser uma App Password do Google na variavel `SMTP_PASS`.
+
 ## Fluxo recomendado de publicacao
 
 1. Faça `git add .`
@@ -164,6 +180,13 @@ Elas ajudam no compartilhamento publico e deixam o deploy com base minima operac
 - `OPENAI_OUTPUT_COST_PER_1M`: custo de saida por 1 milhao de tokens para estimativa
 - `GEMINI_INPUT_COST_PER_1M`: custo de entrada por 1 milhao de tokens para estimativa
 - `GEMINI_OUTPUT_COST_PER_1M`: custo de saida por 1 milhao de tokens para estimativa
+- `SMTP_HOST`: host SMTP para enviar mensagens da pagina de suporte
+- `SMTP_PORT`: porta SMTP
+- `SMTP_SECURE`: `true` ou `false`
+- `SMTP_USER`: usuario SMTP
+- `SMTP_PASS`: senha SMTP ou app password
+- `SUPPORT_FROM_EMAIL`: remetente usado pelo servidor
+- `SUPPORT_TO_EMAIL`: caixa de destino. Padrao `mario.reis.junior@gmail.com`
 - `PORT`: porta local. Padrao `3000`
 - `HOST`: host local. Padrao `0.0.0.0`
 
