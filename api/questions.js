@@ -1,22 +1,27 @@
 import { resolveQuestionRequest } from "../lib/quiz-ai.mjs";
+import { handleCors, sendJson } from "../lib/http-api.mjs";
 
 export default async function handler(req, res) {
+  if (handleCors(req, res)) {
+    return;
+  }
+
   if (req.method !== "POST") {
-    return sendJson(res, 405, { error: "Método não permitido." });
+    return sendJson(req, res, 405, { error: "Método não permitido." });
   }
 
   try {
     const body = await readJsonBody(req);
     const result = await resolveQuestionRequest(body);
-    return sendJson(res, result.status, result.payload);
+    return sendJson(req, res, result.status, result.payload);
   } catch (error) {
     console.error("[api/questions] unexpected error", error);
 
     if (error instanceof SyntaxError) {
-      return sendJson(res, 400, { error: "JSON inválido." });
+      return sendJson(req, res, 400, { error: "JSON inválido." });
     }
 
-    return sendJson(res, 500, { error: "Erro interno no servidor." });
+    return sendJson(req, res, 500, { error: "Erro interno no servidor." });
   }
 }
 
@@ -45,11 +50,4 @@ async function readJsonBody(req) {
   }
 
   return JSON.parse(Buffer.concat(chunks).toString("utf-8"));
-}
-
-function sendJson(res, statusCode, payload) {
-  res.statusCode = statusCode;
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store");
-  res.end(JSON.stringify(payload));
 }

@@ -1,17 +1,22 @@
 import { sendSupportMessage } from "../lib/support-mailer.mjs";
+import { handleCors, sendJson } from "../lib/http-api.mjs";
 
 export default async function handler(req, res) {
+  if (handleCors(req, res)) {
+    return;
+  }
+
   if (req.method !== "POST") {
-    return sendJson(res, 405, { error: "Método não permitido." });
+    return sendJson(req, res, 405, { error: "Método não permitido." });
   }
 
   try {
     const body = await readJsonBody(req);
     const result = await sendSupportMessage(body);
-    return sendJson(res, result.status, result.payload);
+    return sendJson(req, res, result.status, result.payload);
   } catch (error) {
     console.error("[api/support] unexpected error", error);
-    return sendJson(res, 500, { error: "Não foi possível enviar sua mensagem agora." });
+    return sendJson(req, res, 500, { error: "Não foi possível enviar sua mensagem agora." });
   }
 }
 
@@ -40,11 +45,4 @@ async function readJsonBody(req) {
   }
 
   return JSON.parse(Buffer.concat(chunks).toString("utf-8"));
-}
-
-function sendJson(res, statusCode, payload) {
-  res.statusCode = statusCode;
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store");
-  res.end(JSON.stringify(payload));
 }

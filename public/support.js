@@ -1,5 +1,6 @@
 const form = document.querySelector("#support-form");
 const statusBox = document.querySelector("#support-status");
+const buildApiUrl = window.ultimoSobreviventeConfig?.buildApiUrl || ((path) => path);
 
 if (form) {
   form.addEventListener("submit", onSubmitSupport);
@@ -21,7 +22,7 @@ async function onSubmitSupport(event) {
   renderStatus("Enviando mensagem...", "neutral");
 
   try {
-    const response = await fetch("/api/support", {
+    const response = await fetch(buildApiUrl("/api/support"), {
       body: JSON.stringify({
         email,
         message,
@@ -40,7 +41,12 @@ async function onSubmitSupport(event) {
     }
 
     form.reset();
-    renderStatus("Mensagem enviada com sucesso. Obrigado pelo contato.", "success");
+    renderStatus(
+      payload.queued
+        ? "Mensagem recebida no servidor. O envio por email ainda não está configurado, mas o contato foi registrado."
+        : "Mensagem enviada com sucesso. Obrigado pelo contato.",
+      "success"
+    );
   } catch (error) {
     renderStatus(error instanceof Error ? error.message : "Não foi possível enviar sua mensagem agora.", "error");
   }

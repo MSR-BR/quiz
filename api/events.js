@@ -1,8 +1,13 @@
 import { trackServerEvent } from "../lib/server-analytics.mjs";
+import { handleCors, sendJson } from "../lib/http-api.mjs";
 
 export default async function handler(req, res) {
+  if (handleCors(req, res)) {
+    return;
+  }
+
   if (req.method !== "POST") {
-    return sendJson(res, 405, { error: "Método não permitido." });
+    return sendJson(req, res, 405, { error: "Método não permitido." });
   }
 
   try {
@@ -10,14 +15,14 @@ export default async function handler(req, res) {
     const name = sanitizeText(body?.name, 80);
 
     if (!name) {
-      return sendJson(res, 400, { error: "Evento inválido." });
+      return sendJson(req, res, 400, { error: "Evento inválido." });
     }
 
     await trackServerEvent(name, sanitizeProperties(body?.properties));
-    return sendJson(res, 202, { ok: true });
+    return sendJson(req, res, 202, { ok: true });
   } catch (error) {
     console.error("[api/events] unexpected error", error);
-    return sendJson(res, 500, { error: "Erro interno no servidor." });
+    return sendJson(req, res, 500, { error: "Erro interno no servidor." });
   }
 }
 
@@ -74,11 +79,4 @@ function sanitizeText(value, maxLength) {
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, maxLength);
-}
-
-function sendJson(res, statusCode, payload) {
-  res.statusCode = statusCode;
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store");
-  res.end(JSON.stringify(payload));
 }

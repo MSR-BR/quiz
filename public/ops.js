@@ -1,4 +1,5 @@
 const root = document.querySelector("#ops-root");
+const buildApiUrl = window.ultimoSobreviventeConfig?.buildApiUrl || ((path) => path);
 
 loadOps();
 setInterval(loadOps, 15000);
@@ -9,7 +10,7 @@ async function loadOps() {
   }
 
   try {
-    const response = await fetch("/api/ops", {
+    const response = await fetch(buildApiUrl("/api/ops"), {
       cache: "no-store",
     });
     const payload = await response.json();

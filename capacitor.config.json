@@ -1,0 +1,6 @@
+{
+  "appId": "br.com.marioreis.ultimosobrevivente",
+  "appName": "Ultimo Sobrevivente",
+  "webDir": "public",
+  "bundledWebRuntime": false
+}

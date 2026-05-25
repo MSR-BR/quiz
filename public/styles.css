@@ -215,6 +215,64 @@ button {
   border: 1px solid var(--border);
 }
 
+.runtime-banner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: var(--shadow);
+}
+
+.runtime-banner strong {
+  display: block;
+  font-size: 0.98rem;
+}
+
+.runtime-banner p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.runtime-banner--warning {
+  background: rgba(255, 243, 221, 0.94);
+  border-color: rgba(196, 138, 23, 0.22);
+}
+
+.runtime-banner--warning strong,
+.runtime-banner--warning p {
+  color: #7c5908;
+}
+
+.runtime-banner--success {
+  background: rgba(233, 251, 249, 0.96);
+  border-color: rgba(13, 124, 134, 0.22);
+}
+
+.runtime-banner--success strong,
+.runtime-banner--success p {
+  color: var(--primary-strong);
+}
+
+.runtime-banner__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.runtime-banner__close {
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(24, 35, 50, 0.12);
+  background: rgba(255, 255, 255, 0.84);
+  color: var(--text);
+  font-weight: 700;
+}
+
 .server-banner strong {
   display: block;
   font-size: 0.98rem;
@@ -228,6 +286,13 @@ button {
 
 .section-head,
 .split-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hero-topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -444,6 +509,25 @@ button {
   border-radius: 16px;
   font-weight: 800;
   letter-spacing: 0.01em;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 1px solid rgba(24, 35, 50, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.84);
+  color: var(--primary-strong);
+  box-shadow: 0 10px 24px rgba(24, 35, 50, 0.08);
+}
+
+.icon-button svg {
+  width: 22px;
+  height: 22px;
 }
 
 .button:disabled {
@@ -889,5 +973,13 @@ button {
 
   .status-grid {
     gap: 8px;
+  }
+
+  .runtime-banner {
+    flex-direction: column;
+  }
+
+  .runtime-banner__close {
+    width: 100%;
   }
 }

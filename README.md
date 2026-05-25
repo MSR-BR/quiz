@@ -143,11 +143,11 @@ Páginas publicas incluidas:
 
 Elas ajudam no compartilhamento publico e deixam o deploy com base minima operacional.
 
-### Envio direto pela pagina de suporte
+### Suporte por email
 
-O formulario de `/support.html` envia a mensagem pelo backend para `mario.reis.junior@gmail.com`, sem abrir aplicativo de email.
+A pagina `/support.html` orienta o usuario a enviar informacoes diretamente para `mario.reis.junior@gmail.com`.
 
-Para funcionar na Vercel, configure:
+Se quiser reativar o formulario com envio direto pelo backend no futuro, estas variaveis continuam suportadas pelo projeto:
 
 - `SMTP_HOST`
 - `SMTP_PORT`
@@ -158,6 +158,16 @@ Para funcionar na Vercel, configure:
 - `SUPPORT_TO_EMAIL`
 
 Se usar Gmail como remetente, o caminho pratico costuma ser uma App Password do Google na variavel `SMTP_PASS`.
+
+## Preparacao para App Store e Google Play
+
+O projeto ja foi preparado para o primeiro passo de lojas:
+
+- chamadas de API com base configuravel no frontend
+- suporte a CORS para `capacitor://localhost`, `ionic://localhost` e origens extras
+- roadmap salvo em `docs/app-stores-roadmap.md`
+
+Para builds nativos, a ideia e manter o backend publicado na web e empacotar o frontend em um shell nativo.
 
 ## Fluxo recomendado de publicacao
 
@@ -187,6 +197,7 @@ Se usar Gmail como remetente, o caminho pratico costuma ser uma App Password do 
 - `SMTP_PASS`: senha SMTP ou app password
 - `SUPPORT_FROM_EMAIL`: remetente usado pelo servidor
 - `SUPPORT_TO_EMAIL`: caixa de destino. Padrao `mario.reis.junior@gmail.com`
+- `CORS_ALLOWED_ORIGINS`: lista separada por virgula para chamadas cross-origin permitidas
 - `PORT`: porta local. Padrao `3000`
 - `HOST`: host local. Padrao `0.0.0.0`
 

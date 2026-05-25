@@ -7,6 +7,7 @@ import { getMonitoringConfig, getStatusPayload, resolveQuestionRequest } from ".
 import { getOpsSnapshot } from "./lib/ops-monitor.mjs";
 import { trackServerEvent } from "./lib/server-analytics.mjs";
 import { sendSupportMessage } from "./lib/support-mailer.mjs";
+import { handleCors, sendJson } from "./lib/http-api.mjs";
 
 process.loadEnvFile?.(".env");
 
@@ -28,12 +29,16 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
 
+    if (url.pathname.startsWith("/api/") && handleCors(req, res)) {
+      return;
+    }
+
     if (req.method === "GET" && url.pathname === "/api/status") {
-      return sendJson(res, 200, getStatusPayload());
+      return sendJson(req, res, 200, getStatusPayload());
     }
 
     if (req.method === "GET" && url.pathname === "/api/ops") {
-      return sendJson(res, 200, {
+      return sendJson(req, res, 200, {
         generatedAt: new Date().toISOString(),
         monitoring: getMonitoringConfig(),
         ops: getOpsSnapshot(),
@@ -57,10 +62,10 @@ const server = http.createServer(async (req, res) => {
       return serveStaticFile(url.pathname, res);
     }
 
-    return sendJson(res, 405, { error: "Método não permitido." });
+    return sendJson(req, res, 405, { error: "Método não permitido." });
   } catch (error) {
     console.error("[server] unexpected error", error);
-    return sendJson(res, 500, { error: "Erro interno no servidor." });
+    return sendJson(req, res, 500, { error: "Erro interno no servidor." });
   }
 });
 
@@ -104,7 +109,7 @@ server.listen(PORT, HOST, () => {
 async function handleQuestionRequest(req, res) {
   const body = await readJsonBody(req);
   const result = await resolveQuestionRequest(body);
-  return sendJson(res, result.status, result.payload);
+  return sendJson(req, res, result.status, result.payload);
 }
 
 async function handleEventRequest(req, res) {
@@ -112,25 +117,17 @@ async function handleEventRequest(req, res) {
   const name = sanitizeText(body?.name, 80);
 
   if (!name) {
-    return sendJson(res, 400, { error: "Evento inválido." });
+    return sendJson(req, res, 400, { error: "Evento inválido." });
   }
 
   await trackServerEvent(name, sanitizeProperties(body?.properties));
-  return sendJson(res, 202, { ok: true });
+  return sendJson(req, res, 202, { ok: true });
 }
 
 async function handleSupportRequest(req, res) {
   const body = await readJsonBody(req);
   const result = await sendSupportMessage(body);
-  return sendJson(res, result.status, result.payload);
-}
-
-function sendJson(res, statusCode, payload) {
-  res.writeHead(statusCode, {
-    "Content-Type": "application/json; charset=utf-8",
-    "Cache-Control": "no-store",
-  });
-  res.end(JSON.stringify(payload));
+  return sendJson(req, res, result.status, result.payload);
 }
 
 async function readJsonBody(req) {
@@ -189,7 +186,7 @@ async function serveStaticFile(requestPath, res) {
   const filePath = path.join(PUBLIC_DIR, normalizedPath);
 
   if (!filePath.startsWith(PUBLIC_DIR)) {
-    return sendJson(res, 403, { error: "Acesso negado." });
+    return sendJson({ headers: {} }, res, 403, { error: "Acesso negado." });
   }
 
   try {
@@ -204,7 +201,7 @@ async function serveStaticFile(requestPath, res) {
     res.end(file);
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
-      return sendJson(res, 404, { error: "Arquivo não encontrado." });
+      return sendJson({ headers: {} }, res, 404, { error: "Arquivo não encontrado." });
     }
 
     throw error;

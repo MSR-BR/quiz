@@ -3,10 +3,19 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^7.6.5",
+    "@capacitor/core": "^8.3.4",
+    "@capacitor/ios": "^8.3.4",
     "@vercel/analytics": "latest",
     "nodemailer": "^6.10.1"
   },
   "scripts": {
+    "cap:add:android": "npx cap add android",
+    "cap:add:ios": "npx cap add ios",
+    "cap:open:android": "npx cap open android",
+    "cap:open:ios": "npx cap open ios",
+    "cap:sync": "npx cap sync",
     "dev": "node server.mjs",
     "start": "node server.mjs"
   }

@@ -1,13 +1,18 @@
 import { getMonitoringConfig, getStatusPayload } from "../lib/quiz-ai.mjs";
 import { getOpsSnapshot } from "../lib/ops-monitor.mjs";
+import { handleCors, sendJson } from "../lib/http-api.mjs";
 
 export default async function handler(req, res) {
+  if (handleCors(req, res)) {
+    return;
+  }
+
   if (req.method !== "GET") {
-    return sendJson(res, 405, { error: "Método não permitido." });
+    return sendJson(req, res, 405, { error: "Método não permitido." });
   }
 
   try {
-    return sendJson(res, 200, {
+    return sendJson(req, res, 200, {
       generatedAt: new Date().toISOString(),
       monitoring: getMonitoringConfig(),
       ops: getOpsSnapshot(),
@@ -15,13 +20,6 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error("[api/ops] unexpected error", error);
-    return sendJson(res, 500, { error: "Erro interno no servidor." });
+    return sendJson(req, res, 500, { error: "Erro interno no servidor." });
   }
-}
-
-function sendJson(res, statusCode, payload) {
-  res.statusCode = statusCode;
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store");
-  res.end(JSON.stringify(payload));
 }

@@ -46,6 +46,8 @@ const DIFFICULTIES = [
 const STORAGE_KEY = "ultimo-sobrevivente-v1";
 const EMPTY_SELECTION = "";
 const APP_SESSION_ID = createId();
+const buildApiUrl = window.ultimoSobreviventeConfig?.buildApiUrl || ((path) => path);
+const APP_PUBLIC_URL = getPublicShareUrl();
 
 const state = loadState();
 const app = document.querySelector("#app");
@@ -53,6 +55,8 @@ const app = document.querySelector("#app");
 app.addEventListener("click", onClick);
 app.addEventListener("submit", onSubmit);
 app.addEventListener("change", onChange);
+window.addEventListener("online", handleConnectivityChange);
+window.addEventListener("offline", handleConnectivityChange);
 
 render();
 
@@ -154,6 +158,22 @@ function onClick(event) {
     return;
   }
 
+  if (action === "share-app") {
+    void shareApp();
+    return;
+  }
+
+  if (action === "share-result") {
+    void shareResult();
+    return;
+  }
+
+  if (action === "dismiss-flash") {
+    state.flashMessage = null;
+    sync();
+    return;
+  }
+
   if (action === "back-to-setup") {
     state.status = "setup";
     state.currentQuestion = null;
@@ -211,6 +231,22 @@ function removePlayer(playerId) {
   sync();
 }
 
+function handleConnectivityChange() {
+  const isOnline = window.navigator.onLine !== false;
+  state.isOnline = isOnline;
+
+  if (isOnline) {
+    state.flashMessage = {
+      tone: "success",
+      text: "Conexão restabelecida. Você já pode gerar perguntas novamente.",
+    };
+  } else {
+    state.flashMessage = null;
+  }
+
+  sync();
+}
+
 function resetSetup() {
   state.players = [];
   state.selectedTheme = "Futebol";
@@ -230,6 +266,7 @@ function resetSetup() {
   state.turnFeedback = null;
   state.timeline = [];
   state.winner = null;
+  state.flashMessage = null;
   sync();
 }
 
@@ -268,6 +305,7 @@ async function startGame() {
   state.turnFeedback = null;
   state.winner = null;
   state.error = "";
+  state.flashMessage = null;
   state.recentQuestions = [];
   sync();
   void trackProductEvent("partida_iniciada", {
@@ -303,12 +341,27 @@ function resetAll() {
   state.turnFeedback = null;
   state.timeline = [];
   state.winner = null;
+  state.flashMessage = null;
   sync();
 }
 
 async function fetchQuestion() {
   const currentPlayer = state.activePlayers[state.currentPlayerIndex];
   if (!currentPlayer) {
+    return;
+  }
+
+  if (!state.isOnline) {
+    state.error = "Você está sem internet. Conecte o aparelho para gerar a próxima pergunta.";
+    void trackProductEvent("erro", {
+      difficulty: state.difficulty,
+      reason: "offline",
+      round: state.round,
+      scope: "question_request",
+      session_id: APP_SESSION_ID,
+      theme: getSelectedTheme() || "Tema livre",
+    });
+    sync();
     return;
   }
 
@@ -320,7 +373,7 @@ async function fetchQuestion() {
   sync();
 
   try {
-    const response = await fetch("/api/questions", {
+    const { payload, response } = await requestJson(buildApiUrl("/api/questions"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -332,8 +385,6 @@ async function fetchQuestion() {
         theme: getSelectedTheme(),
       }),
     });
-
-    const payload = await response.json();
 
     if (!response.ok) {
       throw new Error(payload.error || "Não foi possível gerar a pergunta.");
@@ -449,6 +500,7 @@ async function finishTurn(eliminatePlayer) {
       session_id: APP_SESSION_ID,
       theme: getSelectedTheme() || "Tema livre",
     });
+    triggerHaptic([90, 50, 120]);
 
     sync();
     return;
@@ -473,6 +525,7 @@ async function finishTurn(eliminatePlayer) {
     title: feedbackTitle,
     tone: turnFeedbackTone,
   };
+  triggerHaptic(eliminatePlayer ? [120, 40, 120] : 50);
   sync();
 }
 
@@ -533,13 +586,26 @@ function renderSetup() {
   return `
     <section class="screen">
       <section class="hero-card">
-        <div class="eyebrow">Jogo de perguntas</div>
+        <div class="hero-topbar">
+          <div class="eyebrow">Jogo de perguntas</div>
+          <button
+            type="button"
+            class="icon-button"
+            data-action="share-app"
+            aria-label="Compartilhar jogo"
+            title="Compartilhar jogo"
+          >
+            ${renderShareIcon()}
+          </button>
+        </div>
         <h1 class="hero-title">Último<br />Sobrevivente</h1>
         <p class="hero-copy">
           Um jogador segura o celular, lê a pergunta em voz alta e elimina quem errar.
           A rodada gira até restar só um.
         </p>
       </section>
+
+      ${renderRuntimeAlerts()}
 
       <section class="section-card">
         <div class="section-head">
@@ -711,6 +777,8 @@ function renderGame() {
           <span class="meta-pill meta-pill--accent">${state.eliminatedPlayers.length} eliminados</span>
         </div>
       </section>
+
+      ${renderRuntimeAlerts()}
 
       <section class="status-grid">
         <article class="status-card">
@@ -914,6 +982,8 @@ function renderTurnFeedback() {
         </div>
       </section>
 
+      ${renderRuntimeAlerts()}
+
       <section class="turn-card ${toneClass}">
         <div class="turn-card__label">Próximo passo</div>
         <h2 class="turn-card__title">${escapeHtml(feedback?.nextPlayerName || "Continuar a partida")}</h2>
@@ -959,6 +1029,8 @@ function renderFinished() {
           <span class="meta-pill meta-pill--accent">${state.eliminatedPlayers.length} eliminações</span>
         </div>
       </section>
+
+      ${renderRuntimeAlerts()}
 
       <section class="section-card">
         <div class="section-head">
@@ -1027,6 +1099,9 @@ function renderFinished() {
         <button type="button" class="button button-primary button-large" data-action="play-again">
           Reiniciar com mesmos jogadores
         </button>
+        <button type="button" class="button button-secondary" data-action="share-result">
+          Compartilhar resultado
+        </button>
         <button type="button" class="button button-ghost" data-action="restart-all">
           Reiniciar geral
         </button>
@@ -1056,12 +1131,56 @@ function renderMatchControls(title = "Controles da partida") {
   `;
 }
 
+function renderRuntimeAlerts() {
+  const parts = [];
+
+  if (!state.isOnline) {
+    parts.push(`
+      <section class="runtime-banner runtime-banner--warning">
+        <strong>Você está sem internet</strong>
+        <p>O jogo continua aberto, mas novas perguntas e eventos só voltam a funcionar quando a conexão retornar.</p>
+      </section>
+    `);
+  }
+
+  if (state.flashMessage?.text) {
+    parts.push(`
+      <section class="runtime-banner runtime-banner--${escapeAttribute(state.flashMessage.tone || "success")}">
+        <div class="runtime-banner__content">
+          <strong>${escapeHtml(state.flashMessage.tone === "success" ? "Tudo certo" : "Aviso")}</strong>
+          <p>${escapeHtml(state.flashMessage.text)}</p>
+        </div>
+        <button type="button" class="runtime-banner__close" data-action="dismiss-flash" aria-label="Fechar aviso">
+          Fechar
+        </button>
+      </section>
+    `);
+  }
+
+  return parts.join("");
+}
+
 function renderFooterLinks() {
   return `
     <footer class="screen-footer">
       <a class="footer-link" href="/privacy.html">Privacidade</a>
       <a class="footer-link" href="/support.html">Suporte</a>
     </footer>
+  `;
+}
+
+function renderShareIcon() {
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M12 3l4 4m-4-4L8 7m4-4v11m-6 1v4h12v-4"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+      />
+    </svg>
   `;
 }
 
@@ -1116,6 +1235,8 @@ function loadState() {
     difficulty: EMPTY_SELECTION,
     eliminatedPlayers: [],
     error: "",
+    flashMessage: null,
+    isOnline: window.navigator.onLine !== false,
     loadingQuestion: false,
     processingTurn: false,
     players: [],
@@ -1147,6 +1268,8 @@ function loadState() {
       currentQuestion: null,
       eliminatedPlayers: [],
       error: "",
+      flashMessage: null,
+      isOnline: window.navigator.onLine !== false,
       loadingQuestion: false,
       processingTurn: false,
       recentQuestions: [],
@@ -1167,6 +1290,8 @@ function persistState() {
   const snapshot = {
     ...state,
     error: "",
+    flashMessage: null,
+    isOnline: window.navigator.onLine !== false,
     loadingQuestion: false,
   };
 
@@ -1201,11 +1326,145 @@ function formatQuestionError(message) {
     return "Houve um problema ao buscar a próxima pergunta.";
   }
 
+  if (/load failed|failed to fetch|networkerror|network request failed/i.test(normalizedMessage)) {
+    return "Não conseguimos falar com o servidor agora. Recarregue a página e tente novamente.";
+  }
+
   if (/missing_api_key|invalid_api_key|quota|billing|rate_limit|timeout|fallback/i.test(normalizedMessage)) {
     return "A próxima rodada usou o modo de segurança para não travar a partida. Você ainda pode continuar jogando normalmente.";
   }
 
   return normalizedMessage;
+}
+
+async function requestJson(url, options = {}, retries = 1) {
+  try {
+    const response = await fetch(url, options);
+    const payload = await response.json();
+    return { payload, response };
+  } catch (error) {
+    if (retries > 0 && isRecoverableNetworkError(error)) {
+      await wait(250);
+      return requestJson(url, options, retries - 1);
+    }
+
+    throw error;
+  }
+}
+
+function isRecoverableNetworkError(error) {
+  const message = String(error instanceof Error ? error.message : error || "");
+  return /load failed|failed to fetch|networkerror|network request failed/i.test(message);
+}
+
+function wait(delayMs) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, delayMs);
+  });
+}
+
+async function shareApp() {
+  const themeLabel = getSelectedTheme() || "qualquer tema";
+  const text = `Experimente o Último Sobrevivente. Escolha o tema, gire as rodadas e veja quem sobra até o fim. Tema atual: ${themeLabel}. ${APP_PUBLIC_URL}`;
+  await shareText({
+    text,
+    title: "Último Sobrevivente",
+    trackName: "compartilhamento_app",
+  });
+}
+
+async function shareResult() {
+  const winnerName = state.winner?.name || "Um campeão";
+  const text = `${winnerName} venceu no Último Sobrevivente após ${state.round} rodada(s) em ${getSelectedTheme() || "tema livre"} no nível ${formatDifficulty(state.difficulty)}. Teste aqui: ${APP_PUBLIC_URL}`;
+  await shareText({
+    text,
+    title: "Resultado do Último Sobrevivente",
+    trackName: "compartilhamento_resultado",
+  });
+}
+
+async function shareText({ text, title, trackName }) {
+  try {
+    await copyTextSilently(text);
+
+    if (navigator.share) {
+      await navigator.share({
+        text,
+        title,
+        url: APP_PUBLIC_URL,
+      });
+    } else {
+      state.flashMessage = {
+        tone: "warning",
+        text: "O texto foi copiado, mas este navegador não consegue abrir o menu de compartilhamento do telefone. Em HTTPS ou no app instalado isso funciona melhor.",
+      };
+      sync();
+    }
+
+    triggerHaptic(35);
+    void trackProductEvent(trackName, {
+      session_id: APP_SESSION_ID,
+      theme: getSelectedTheme() || "Tema livre",
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return;
+    }
+
+    state.flashMessage = {
+      tone: "warning",
+      text: "Não conseguimos abrir o compartilhamento agora.",
+    };
+    sync();
+  }
+}
+
+async function copyTextSilently(text) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // Cai para o fallback abaixo.
+    }
+  }
+
+  copyWithSelectionFallback(text);
+}
+
+function copyWithSelectionFallback(text) {
+  const helper = document.createElement("textarea");
+  helper.value = text;
+  helper.setAttribute("readonly", "true");
+  helper.style.position = "absolute";
+  helper.style.left = "-9999px";
+  document.body.appendChild(helper);
+  helper.select();
+  document.execCommand("copy");
+  document.body.removeChild(helper);
+}
+
+function triggerHaptic(pattern) {
+  if (typeof navigator.vibrate !== "function") {
+    return;
+  }
+
+  try {
+    navigator.vibrate(pattern);
+  } catch {
+    // Ignora dispositivos sem suporte real a vibração.
+  }
+}
+
+function getPublicShareUrl() {
+  const canonicalLink = document.querySelector('link[rel="canonical"]');
+  const canonicalUrl = String(canonicalLink?.getAttribute("href") || "").trim();
+
+  if (canonicalUrl) {
+    return canonicalUrl;
+  }
+
+  return "https://quiz-ashy-five.vercel.app/";
 }
 
 function trackProductEvent(name, properties = {}) {
@@ -1215,7 +1474,7 @@ function trackProductEvent(name, properties = {}) {
   });
 
   try {
-    void fetch("/api/events", {
+    void fetch(buildApiUrl("/api/events"), {
       body: payload,
       headers: {
         "Content-Type": "application/json",
@@ -1225,7 +1484,7 @@ function trackProductEvent(name, properties = {}) {
     });
   } catch {
     if (navigator.sendBeacon) {
-      navigator.sendBeacon("/api/events", new Blob([payload], { type: "application/json" }));
+      navigator.sendBeacon(buildApiUrl("/api/events"), new Blob([payload], { type: "application/json" }));
     }
   }
 }
