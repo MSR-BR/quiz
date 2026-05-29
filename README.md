@@ -166,8 +166,15 @@ O projeto ja foi preparado para o primeiro passo de lojas:
 - chamadas de API com base configuravel no frontend
 - suporte a CORS para `capacitor://localhost`, `ionic://localhost` e origens extras
 - roadmap salvo em `docs/app-stores-roadmap.md`
+- passo a passo Android salvo em `docs/android-publicacao.md`
 
 Para builds nativos, a ideia e manter o backend publicado na web e empacotar o frontend em um shell nativo.
+
+## Rotas publicas
+
+- `/`: landing page simples para divulgacao
+- `/jogar`: versao web jogavel
+- Android: pacote Capacitor com a mesma interface do jogo
 
 ## Fluxo recomendado de publicacao
 

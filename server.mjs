@@ -178,7 +178,7 @@ function sanitizeText(value, maxLength) {
 }
 
 async function serveStaticFile(requestPath, res) {
-  const pathname = requestPath === "/" ? "/index.html" : requestPath;
+  const pathname = resolveStaticPathname(requestPath);
   const normalizedPath = path
     .normalize(decodeURIComponent(pathname))
     .replace(/^(\.\.[/\\])+/, "")
@@ -206,6 +206,20 @@ async function serveStaticFile(requestPath, res) {
 
     throw error;
   }
+}
+
+function resolveStaticPathname(requestPath) {
+  if (requestPath === "/") {
+    return "/index.html";
+  }
+
+  const pathname = requestPath.endsWith("/") ? requestPath.slice(0, -1) : requestPath;
+
+  if (!path.extname(pathname)) {
+    return `${pathname}.html`;
+  }
+
+  return pathname;
 }
 
 function getAccessUrls() {

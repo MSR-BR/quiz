@@ -1,4 +1,5 @@
 const THEMES = [
+  "Digite o tema",
   "Futebol",
   "História",
   "Física",
@@ -22,7 +23,6 @@ const THEMES = [
   "Mitologia",
   "Empreendedorismo",
   "Séries",
-  "Outro tema",
 ];
 
 const DIFFICULTIES = [
@@ -45,6 +45,7 @@ const DIFFICULTIES = [
 
 const STORAGE_KEY = "ultimo-sobrevivente-v1";
 const EMPTY_SELECTION = "";
+const CUSTOM_THEME = "Digite o tema";
 const APP_SESSION_ID = createId();
 const buildApiUrl = window.ultimoSobreviventeConfig?.buildApiUrl || ((path) => path);
 const APP_PUBLIC_URL = getPublicShareUrl();
@@ -74,9 +75,14 @@ function onClick(event) {
   }
 
   if (action === "select-theme") {
-    state.selectedTheme = target.dataset.theme || "Outro tema";
+    state.selectedTheme = target.dataset.theme || CUSTOM_THEME;
     state.error = "";
     sync();
+    if (state.selectedTheme === CUSTOM_THEME) {
+      window.requestAnimationFrame(() => {
+        document.querySelector("#custom-theme-input")?.focus();
+      });
+    }
     return;
   }
 
@@ -540,7 +546,7 @@ async function advanceToNextTurn() {
 }
 
 function getSelectedTheme() {
-  if (state.selectedTheme === "Outro tema") {
+  if (state.selectedTheme === CUSTOM_THEME || state.selectedTheme === "Outro tema") {
     return state.customTheme.trim();
   }
 
@@ -665,7 +671,7 @@ function renderSetup() {
           ${THEMES.map((theme) => renderThemeChip(theme)).join("")}
         </div>
         ${
-          state.selectedTheme === "Outro tema"
+          state.selectedTheme === CUSTOM_THEME || state.selectedTheme === "Outro tema"
             ? `
               <div class="custom-theme-wrap">
                 <input
@@ -1163,6 +1169,7 @@ function renderRuntimeAlerts() {
 function renderFooterLinks() {
   return `
     <footer class="screen-footer">
+      <a class="footer-link" href="/">Início</a>
       <a class="footer-link" href="/privacy.html">Privacidade</a>
       <a class="footer-link" href="/support.html">Suporte</a>
     </footer>
@@ -1259,6 +1266,9 @@ function loadState() {
 
     const parsed = JSON.parse(raw);
     const { localAiConfig: _legacyLocalAiConfig, ...storedState } = parsed;
+    if (storedState.selectedTheme === "Outro tema") {
+      storedState.selectedTheme = CUSTOM_THEME;
+    }
 
     return {
       ...fallback,

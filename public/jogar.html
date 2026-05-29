@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="Jogo de perguntas em grupo para celular. Escolha tema, nível e elimine quem errar até sobrar só um vencedor."
+    />
+    <meta name="robots" content="index,follow" />
+    <meta name="theme-color" content="#0d7c86" />
+    <meta name="app-api-base" content="https://quiz-ashy-five.vercel.app" />
+    <meta name="application-name" content="Último Sobrevivente" />
+    <meta name="apple-mobile-web-app-title" content="Último Sobrevivente" />
+    <link rel="canonical" href="https://quiz-ashy-five.vercel.app/" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Último Sobrevivente" />
+    <meta property="og:title" content="Jogar Último Sobrevivente" />
+    <meta
+      property="og:description"
+      content="Jogo de perguntas em grupo onde cada erro elimina um participante até restar só um vencedor."
+    />
+    <meta property="og:url" content="https://quiz-ashy-five.vercel.app/" />
+    <meta property="og:image" content="https://quiz-ashy-five.vercel.app/social-card.svg" />
+    <meta property="og:image:alt" content="Arte do jogo Último Sobrevivente" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Jogar Último Sobrevivente" />
+    <meta
+      name="twitter:description"
+      content="Jogo de perguntas em grupo onde cada erro elimina um participante até restar só um vencedor."
+    />
+    <meta name="twitter:image" content="https://quiz-ashy-five.vercel.app/social-card.svg" />
+    <title>Jogar Último Sobrevivente | Jogo de Perguntas em Grupo</title>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script>
+      (function () {
+        var hostname = window.location.hostname;
+        var isLocal =
+          hostname === "localhost" ||
+          hostname === "127.0.0.1" ||
+          hostname === "";
+
+        if (isLocal) {
+          return;
+        }
+
+        window.va =
+          window.va ||
+          function () {
+            (window.vaq = window.vaq || []).push(arguments);
+          };
+
+        var script = document.createElement("script");
+        script.defer = true;
+        script.src = "/_vercel/insights/script.js";
+        document.head.appendChild(script);
+      })();
+    </script>
+    <script defer src="/runtime-config.js"></script>
+    <script defer src="/app.js"></script>
+  </head>
+  <body>
+    <div class="backdrop" aria-hidden="true"></div>
+    <main class="app-shell">
+      <div id="app"></div>
+    </main>
+  </body>
+</html>

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Ultimo Sobrevivente</string>
-    <string name="title_activity_main">Ultimo Sobrevivente</string>
+    <string name="app_name">Último Sobrevivente</string>
+    <string name="title_activity_main">Último Sobrevivente</string>
     <string name="package_name">br.com.marioreis.ultimosobrevivente</string>
     <string name="custom_url_scheme">br.com.marioreis.ultimosobrevivente</string>
 </resources>

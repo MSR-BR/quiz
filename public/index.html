@@ -8,11 +8,10 @@
     />
     <meta
       name="description"
-      content="Jogo de perguntas em grupo para celular. Escolha tema, nível e elimine quem errar até sobrar só um vencedor."
+      content="Último Sobrevivente: jogue online pelo navegador ou baixe o app Android do jogo de perguntas em grupo."
     />
     <meta name="robots" content="index,follow" />
     <meta name="theme-color" content="#0d7c86" />
-    <meta name="app-api-base" content="https://quiz-ashy-five.vercel.app" />
     <meta name="application-name" content="Último Sobrevivente" />
     <meta name="apple-mobile-web-app-title" content="Último Sobrevivente" />
     <link rel="canonical" href="https://quiz-ashy-five.vercel.app/" />
@@ -23,7 +22,7 @@
     <meta property="og:title" content="Último Sobrevivente" />
     <meta
       property="og:description"
-      content="Jogo de perguntas em grupo onde cada erro elimina um participante até restar só um vencedor."
+      content="Jogue online ou baixe o app Android do jogo de perguntas em grupo onde cada erro elimina um participante."
     />
     <meta property="og:url" content="https://quiz-ashy-five.vercel.app/" />
     <meta property="og:image" content="https://quiz-ashy-five.vercel.app/social-card.svg" />
@@ -34,10 +33,10 @@
     <meta name="twitter:title" content="Último Sobrevivente" />
     <meta
       name="twitter:description"
-      content="Jogo de perguntas em grupo onde cada erro elimina um participante até restar só um vencedor."
+      content="Jogue online ou baixe o app Android do Último Sobrevivente."
     />
     <meta name="twitter:image" content="https://quiz-ashy-five.vercel.app/social-card.svg" />
-    <title>Último Sobrevivente | Jogo de Perguntas em Grupo</title>
+    <title>Último Sobrevivente | Jogue online ou baixe o Android</title>
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
     <script>
@@ -64,13 +63,69 @@
         document.head.appendChild(script);
       })();
     </script>
-    <script defer src="/runtime-config.js"></script>
-    <script defer src="/app.js"></script>
+    <script>
+      (function () {
+        function redirectNativeApp() {
+          var isNativeApp =
+            window.location.protocol === "capacitor:" ||
+            Boolean(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+
+          if (isNativeApp) {
+            window.location.replace("jogar.html");
+          }
+        }
+
+        redirectNativeApp();
+        window.addEventListener("DOMContentLoaded", redirectNativeApp);
+        window.setTimeout(redirectNativeApp, 250);
+      })();
+    </script>
   </head>
   <body>
     <div class="backdrop" aria-hidden="true"></div>
-    <main class="app-shell">
-      <div id="app"></div>
+    <main class="landing-shell">
+      <section class="landing-hero">
+        <div class="landing-copy">
+          <div class="eyebrow">Jogo de perguntas em grupo</div>
+          <h1 class="landing-title">Último Sobrevivente</h1>
+          <p class="landing-lead">
+            Errou, saiu. Escolha tema e nível, passe o celular pela roda e descubra quem fica até o fim.
+          </p>
+          <div class="landing-actions">
+            <a class="button button-primary button-large" href="/jogar">Jogar online web</a>
+            <a class="button button-secondary button-large" href="#android-download">Download Android</a>
+          </div>
+        </div>
+
+        <div class="phone-preview" aria-hidden="true">
+          <div class="phone-preview__bar"></div>
+          <div class="phone-preview__screen">
+            <span class="question-label">Pergunta da vez</span>
+            <strong>Ana</strong>
+            <p>Quem foi o primeiro imperador do Brasil após a independência?</p>
+            <div class="phone-preview__chips">
+              <span>História</span>
+              <span>Fácil</span>
+            </div>
+            <div class="phone-preview__button"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="android-download" class="download-panel">
+        <div>
+          <h2 class="section-title">Android</h2>
+          <p class="section-copy">
+            O APK será publicado aqui quando fecharmos o primeiro pacote Android. Por enquanto, o jogo online já está pronto para compartilhar.
+          </p>
+        </div>
+        <a class="footer-link" href="/jogar">Abrir versão web</a>
+      </section>
+
+      <footer class="screen-footer">
+        <a class="footer-link" href="/privacy.html">Privacidade</a>
+        <a class="footer-link" href="/support.html">Suporte</a>
+      </footer>
     </main>
   </body>
 </html>
