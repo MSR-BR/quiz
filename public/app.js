@@ -124,7 +124,7 @@ function onClick(event) {
   }
 
   if (action === "swap-question") {
-    void fetchQuestion();
+    void fetchQuestion({ includeCurrentQuestion: true });
     return;
   }
 
@@ -351,7 +351,7 @@ function resetAll() {
   sync();
 }
 
-async function fetchQuestion() {
+async function fetchQuestion({ includeCurrentQuestion = false } = {}) {
   const currentPlayer = state.activePlayers[state.currentPlayerIndex];
   if (!currentPlayer) {
     return;
@@ -379,21 +379,22 @@ async function fetchQuestion() {
   sync();
 
   try {
-    const { payload, response } = await requestJson(buildApiUrl("/api/questions"), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        difficulty: state.difficulty,
-        playerName: currentPlayer.name,
-        recentQuestions: state.recentQuestions.slice(-10),
-        theme: getSelectedTheme(),
-      }),
-    });
+    let recentQuestions = getRecentQuestionsForRequest({ includeCurrentQuestion });
+    let { payload, response } = await requestQuestionPayload(currentPlayer, recentQuestions);
 
     if (!response.ok) {
       throw new Error(payload.error || "Não foi possível gerar a pergunta.");
+    }
+
+    if (isQuestionAlreadySeen(payload.question, recentQuestions)) {
+      recentQuestions = [...recentQuestions, payload.question].filter(Boolean).slice(-10);
+      const retryResult = await requestQuestionPayload(currentPlayer, recentQuestions);
+      payload = retryResult.payload;
+      response = retryResult.response;
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Não foi possível gerar a pergunta.");
+      }
     }
 
     state.currentQuestion = payload;
@@ -433,6 +434,21 @@ async function fetchQuestion() {
   }
 }
 
+async function requestQuestionPayload(currentPlayer, recentQuestions) {
+  return requestJson(buildApiUrl("/api/questions"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      difficulty: state.difficulty,
+      playerName: currentPlayer.name,
+      recentQuestions,
+      theme: getSelectedTheme(),
+    }),
+  });
+}
+
 async function finishTurn(eliminatePlayer) {
   const currentPlayer = state.activePlayers[state.currentPlayerIndex];
   if (!currentPlayer || !state.currentQuestion || state.processingTurn) {
@@ -444,14 +460,6 @@ async function finishTurn(eliminatePlayer) {
   const roundLabel = `Rodada ${state.round}`;
   const questionTheme = state.currentQuestion.theme || getSelectedTheme();
   const resolvedAnswer = state.currentQuestion.answer;
-  const resolvedExplanation = state.currentQuestion.explanation;
-  const currentQuestionText = state.currentQuestion.question;
-  let nextPlayerName = "";
-  let turnFeedbackTone = eliminatePlayer ? "danger" : "success";
-  let feedbackTitle = "";
-  let feedbackCopy = "";
-  let feedbackBadge = "";
-
   if (eliminatePlayer) {
     state.timeline.unshift({
       id: createId(),
@@ -465,10 +473,6 @@ async function finishTurn(eliminatePlayer) {
       ...removedPlayer,
       round: state.round,
     });
-
-    feedbackTitle = `${currentPlayer.name} saiu da partida`;
-    feedbackCopy = `A resposta correta era ${resolvedAnswer}. ${state.activePlayers.length > 1 ? "O jogo continua com o próximo participante." : ""}`.trim();
-    feedbackBadge = "Eliminado";
   } else {
     state.timeline.unshift({
       id: createId(),
@@ -478,10 +482,6 @@ async function finishTurn(eliminatePlayer) {
     });
 
     state.currentPlayerIndex += 1;
-
-    feedbackTitle = `${currentPlayer.name} acertou`;
-    feedbackCopy = `A resposta correta era ${resolvedAnswer}. Vamos girar para o próximo jogador.`;
-    feedbackBadge = "Acerto";
   }
 
   if (state.activePlayers.length === 1) {
@@ -517,22 +517,13 @@ async function finishTurn(eliminatePlayer) {
     state.round += 1;
   }
 
-  nextPlayerName = state.activePlayers[state.currentPlayerIndex]?.name || "";
   state.currentQuestion = null;
   state.revealAnswer = false;
   state.showHint = false;
-  state.turnFeedback = {
-    badge: feedbackBadge,
-    copy: feedbackCopy,
-    explanation: resolvedExplanation,
-    nextPlayerName,
-    questionTheme,
-    questionText: currentQuestionText,
-    title: feedbackTitle,
-    tone: turnFeedbackTone,
-  };
+  state.turnFeedback = null;
   triggerHaptic(eliminatePlayer ? [120, 40, 120] : 50);
   sync();
+  await fetchQuestion({ includeCurrentQuestion: true });
 }
 
 async function advanceToNextTurn() {
@@ -551,6 +542,33 @@ function getSelectedTheme() {
   }
 
   return state.selectedTheme;
+}
+
+function getRecentQuestionsForRequest({ includeCurrentQuestion = false } = {}) {
+  const questions = [...state.recentQuestions];
+  const currentQuestionText = state.currentQuestion?.question;
+
+  if (includeCurrentQuestion && currentQuestionText) {
+    questions.push(currentQuestionText);
+  }
+
+  return Array.from(new Set(questions.filter(Boolean))).slice(-10);
+}
+
+function isQuestionAlreadySeen(question, recentQuestions) {
+  const signature = createQuestionSignature(question);
+  return Boolean(signature) && recentQuestions.some((recentQuestion) => createQuestionSignature(recentQuestion) === signature);
+}
+
+function createQuestionSignature(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .join(" ");
 }
 
 function syncCustomThemeInput() {
