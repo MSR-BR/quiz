@@ -24,7 +24,7 @@
           jogadores servem apenas para organizar a partida atual.
         </p>
         <div class="page-links">
-          <a class="page-link" href="/">Voltar ao jogo</a>
+          <a class="page-link" href="/jogar">Voltar ao jogo</a>
           <a class="page-link" href="/support.html">Página de suporte</a>
         </div>
       </section>
@@ -49,5 +49,13 @@
 
       <footer class="legal-footer">Desenvolvido por Mario Reis</footer>
     </main>
+    <script>
+      document.querySelector('a[href="/jogar"]')?.addEventListener("click", function (event) {
+        if (window.history.length > 1) {
+          event.preventDefault();
+          window.history.back();
+        }
+      });
+    </script>
   </body>
 </html>

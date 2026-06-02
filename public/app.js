@@ -1187,7 +1187,7 @@ function renderRuntimeAlerts() {
 function renderFooterLinks() {
   return `
     <footer class="screen-footer">
-      <a class="footer-link" href="/">Início</a>
+      <a class="footer-link" href="/jogar">Jogo</a>
       <a class="footer-link" href="/privacy.html">Privacidade</a>
       <a class="footer-link" href="/support.html">Suporte</a>
     </footer>
@@ -1412,9 +1412,9 @@ async function shareResult() {
 }
 
 async function shareText({ text, title, trackName }) {
-  try {
-    await copyTextSilently(text);
+  const copied = await copyTextSilently(text);
 
+  try {
     if (navigator.share) {
       await navigator.share({
         text,
@@ -1423,8 +1423,10 @@ async function shareText({ text, title, trackName }) {
       });
     } else {
       state.flashMessage = {
-        tone: "warning",
-        text: "O texto foi copiado, mas este navegador não consegue abrir o menu de compartilhamento do telefone. Em HTTPS ou no app instalado isso funciona melhor.",
+        tone: "success",
+        text: copied
+          ? "Link copiado. Cole em uma mensagem para enviar."
+          : "Copie este link para enviar: " + APP_PUBLIC_URL,
       };
       sync();
     }
@@ -1440,8 +1442,10 @@ async function shareText({ text, title, trackName }) {
     }
 
     state.flashMessage = {
-      tone: "warning",
-      text: "Não conseguimos abrir o compartilhamento agora.",
+      tone: copied ? "success" : "warning",
+      text: copied
+        ? "O Android não abriu o compartilhamento, mas o link foi copiado."
+        : "O Android não conseguiu abrir o compartilhamento. Use o link: " + APP_PUBLIC_URL,
     };
     sync();
   }
@@ -1451,13 +1455,13 @@ async function copyTextSilently(text) {
   if (navigator.clipboard?.writeText) {
     try {
       await navigator.clipboard.writeText(text);
-      return;
+      return true;
     } catch {
       // Cai para o fallback abaixo.
     }
   }
 
-  copyWithSelectionFallback(text);
+  return copyWithSelectionFallback(text);
 }
 
 function copyWithSelectionFallback(text) {
@@ -1468,8 +1472,9 @@ function copyWithSelectionFallback(text) {
   helper.style.left = "-9999px";
   document.body.appendChild(helper);
   helper.select();
-  document.execCommand("copy");
+  const copied = document.execCommand("copy");
   document.body.removeChild(helper);
+  return copied;
 }
 
 function triggerHaptic(pattern) {
