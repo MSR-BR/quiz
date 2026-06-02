@@ -2,8 +2,10 @@
   const meta = document.querySelector('meta[name="app-api-base"]');
   const isBrowserOrigin = window.location.protocol === "http:" || window.location.protocol === "https:";
   const nativeBridge = window.Capacitor;
+  const isAndroidWebView = /; wv\)/i.test(window.navigator.userAgent || "");
   const isNativeApp =
     window.location.protocol === "capacitor:" ||
+    isAndroidWebView ||
     Boolean(nativeBridge?.isNativePlatform?.()) ||
     Boolean(nativeBridge?.getPlatform && nativeBridge.getPlatform() !== "web");
   const apiBase = isBrowserOrigin && !isNativeApp ? "" : normalizeBase(meta ? meta.content : "");
