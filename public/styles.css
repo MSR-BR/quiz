@@ -844,6 +844,12 @@ button {
   padding: 18px 16px var(--safe-bottom);
 }
 
+.legal-topbar {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+
 .legal-card {
   padding: 22px;
   background: var(--card);

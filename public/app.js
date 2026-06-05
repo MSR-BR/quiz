@@ -1187,7 +1187,6 @@ function renderRuntimeAlerts() {
 function renderFooterLinks() {
   return `
     <footer class="screen-footer">
-      <a class="footer-link" href="/jogar">Jogo</a>
       <a class="footer-link" href="/privacy.html">Privacidade</a>
       <a class="footer-link" href="/support.html">Suporte</a>
     </footer>
