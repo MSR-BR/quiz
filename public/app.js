@@ -46,6 +46,8 @@ const DIFFICULTIES = [
 const STORAGE_KEY = "ultimo-sobrevivente-v1";
 const EMPTY_SELECTION = "";
 const CUSTOM_THEME = "Digite o tema";
+const SOLO_LIVES = 3;
+const SOLO_OPTION_COUNT = 5;
 const APP_SESSION_ID = createId();
 const buildApiUrl = window.ultimoSobreviventeConfig?.buildApiUrl || ((path) => path);
 const APP_PUBLIC_URL = getPublicShareUrl();
@@ -56,6 +58,7 @@ const app = document.querySelector("#app");
 app.addEventListener("click", onClick);
 app.addEventListener("submit", onSubmit);
 app.addEventListener("change", onChange);
+app.addEventListener("input", onInput);
 window.addEventListener("online", handleConnectivityChange);
 window.addEventListener("offline", handleConnectivityChange);
 
@@ -135,6 +138,16 @@ function onClick(event) {
 
   if (action === "mark-wrong") {
     void finishTurn(true);
+    return;
+  }
+
+  if (action === "select-solo-option") {
+    void answerSoloQuestion(target.dataset.option || "");
+    return;
+  }
+
+  if (action === "solo-next-question") {
+    void nextSoloQuestion();
     return;
   }
 
@@ -231,6 +244,17 @@ function onChange(event) {
   }
 }
 
+function onInput(event) {
+  if (event.target.name === "customTheme") {
+    state.customTheme = event.target.value.trim();
+    persistState();
+    const startButton = document.querySelector('[data-action="start-game"]');
+    if (startButton) {
+      startButton.disabled = !(state.players.length >= 1 && Boolean(getSelectedTheme()) && Boolean(state.difficulty));
+    }
+  }
+}
+
 function removePlayer(playerId) {
   state.players = state.players.filter((player) => player.id !== playerId);
   state.error = "";
@@ -267,6 +291,13 @@ function resetSetup() {
   state.recentQuestions = [];
   state.revealAnswer = false;
   state.round = 1;
+  state.mode = "group";
+  state.soloLives = SOLO_LIVES;
+  state.soloScore = 0;
+  state.soloStreak = 0;
+  state.soloBestStreak = 0;
+  state.soloMistakes = 0;
+  state.soloAnswered = false;
   state.showHint = false;
   state.status = "setup";
   state.turnFeedback = null;
@@ -279,8 +310,8 @@ function resetSetup() {
 async function startGame() {
   syncCustomThemeInput();
 
-  if (state.players.length < 2) {
-    state.error = "Adicione pelo menos 2 jogadores para começar.";
+  if (state.players.length < 1) {
+    state.error = "Adicione pelo menos 1 jogador para começar.";
     sync();
     return;
   }
@@ -298,6 +329,7 @@ async function startGame() {
   }
 
   state.status = "playing";
+  state.mode = state.players.length === 1 ? "solo" : "group";
   state.round = 1;
   state.currentPlayerIndex = 0;
   state.activePlayers = state.players.map((player) => ({ ...player }));
@@ -308,6 +340,12 @@ async function startGame() {
   state.showHint = false;
   state.loadingQuestion = false;
   state.processingTurn = false;
+  state.soloLives = state.mode === "solo" ? SOLO_LIVES : 0;
+  state.soloScore = 0;
+  state.soloStreak = 0;
+  state.soloBestStreak = 0;
+  state.soloMistakes = 0;
+  state.soloAnswered = false;
   state.turnFeedback = null;
   state.winner = null;
   state.error = "";
@@ -316,6 +354,7 @@ async function startGame() {
   sync();
   void trackProductEvent("partida_iniciada", {
     difficulty: state.difficulty,
+    mode: state.mode,
     players_count: state.players.length,
     session_id: APP_SESSION_ID,
     theme: getSelectedTheme() || "Tema livre",
@@ -342,6 +381,13 @@ function resetAll() {
   state.recentQuestions = [];
   state.revealAnswer = false;
   state.round = 1;
+  state.mode = "group";
+  state.soloLives = SOLO_LIVES;
+  state.soloScore = 0;
+  state.soloStreak = 0;
+  state.soloBestStreak = 0;
+  state.soloMistakes = 0;
+  state.soloAnswered = false;
   state.showHint = false;
   state.status = "setup";
   state.turnFeedback = null;
@@ -376,6 +422,7 @@ async function fetchQuestion({ includeCurrentQuestion = false } = {}) {
   state.error = "";
   state.revealAnswer = false;
   state.showHint = false;
+  state.soloAnswered = false;
   sync();
 
   try {
@@ -397,7 +444,7 @@ async function fetchQuestion({ includeCurrentQuestion = false } = {}) {
       }
     }
 
-    state.currentQuestion = payload;
+    state.currentQuestion = prepareQuestionForPlay(payload);
     state.recentQuestions = [...state.recentQuestions.slice(-9), payload.question];
     if (payload.source === "fallback" && payload.fallbackReason) {
       void trackProductEvent("erro", {
@@ -442,6 +489,7 @@ async function requestQuestionPayload(currentPlayer, recentQuestions) {
     },
     body: JSON.stringify({
       difficulty: state.difficulty,
+      mode: state.mode,
       playerName: currentPlayer.name,
       recentQuestions,
       theme: getSelectedTheme(),
@@ -526,6 +574,95 @@ async function finishTurn(eliminatePlayer) {
   await fetchQuestion({ includeCurrentQuestion: true });
 }
 
+async function answerSoloQuestion(selectedOption) {
+  const currentPlayer = state.activePlayers[0];
+  if (!isSoloMode() || !currentPlayer || !state.currentQuestion || state.processingTurn || state.soloAnswered) {
+    return;
+  }
+
+  const normalizedSelected = normalizeLooseText(selectedOption);
+  const normalizedAnswer = normalizeLooseText(state.currentQuestion.answer);
+  const isCorrect = Boolean(normalizedSelected) && normalizedSelected === normalizedAnswer;
+  const questionTheme = state.currentQuestion.theme || getSelectedTheme();
+  const roundLabel = `Pergunta ${state.round}`;
+
+  state.processingTurn = true;
+  state.soloAnswered = true;
+  state.revealAnswer = true;
+  state.currentQuestion.selectedOption = selectedOption;
+
+  if (isCorrect) {
+    state.soloScore += 1;
+    state.soloStreak += 1;
+    state.soloBestStreak = Math.max(state.soloBestStreak, state.soloStreak);
+    state.timeline.unshift({
+      id: createId(),
+      kind: "success",
+      title: `${roundLabel}: acerto`,
+      copy: `Tema ${questionTheme}. Pontuação atual: ${state.soloScore}.`,
+    });
+    triggerHaptic(50);
+  } else {
+    state.soloLives = Math.max(0, state.soloLives - 1);
+    state.soloMistakes += 1;
+    state.soloStreak = 0;
+    state.timeline.unshift({
+      id: createId(),
+      kind: "danger",
+      title: `${roundLabel}: erro`,
+      copy: `A resposta correta era: ${state.currentQuestion.answer}. Vidas restantes: ${state.soloLives}.`,
+    });
+    triggerHaptic([120, 40, 120]);
+  }
+
+  void trackProductEvent("resposta_solo", {
+    correct: isCorrect,
+    difficulty: state.difficulty,
+    lives: state.soloLives,
+    round: state.round,
+    score: state.soloScore,
+    session_id: APP_SESSION_ID,
+    theme: getSelectedTheme() || "Tema livre",
+  });
+
+  if (state.soloLives <= 0) {
+    state.status = "finished";
+    state.processingTurn = false;
+    state.timeline.unshift({
+      id: createId(),
+      kind: "winner",
+      title: "Desafio solo encerrado",
+      copy: `${currentPlayer.name} marcou ${state.soloScore} ponto(s) em ${state.round} pergunta(s).`,
+    });
+    void trackProductEvent("partida_finalizada", {
+      difficulty: state.difficulty,
+      mode: "solo",
+      rounds: state.round,
+      score: state.soloScore,
+      session_id: APP_SESSION_ID,
+      theme: getSelectedTheme() || "Tema livre",
+    });
+  } else {
+    state.processingTurn = false;
+  }
+
+  sync();
+}
+
+async function nextSoloQuestion() {
+  if (!isSoloMode() || state.loadingQuestion || !state.soloAnswered) {
+    return;
+  }
+
+  state.round += 1;
+  state.currentQuestion = null;
+  state.revealAnswer = false;
+  state.showHint = false;
+  state.soloAnswered = false;
+  sync();
+  await fetchQuestion({ includeCurrentQuestion: true });
+}
+
 async function advanceToNextTurn() {
   if (state.loadingQuestion) {
     return;
@@ -534,6 +671,10 @@ async function advanceToNextTurn() {
   state.turnFeedback = null;
   sync();
   await fetchQuestion();
+}
+
+function isSoloMode() {
+  return state.mode === "solo";
 }
 
 function getSelectedTheme() {
@@ -560,6 +701,99 @@ function isQuestionAlreadySeen(question, recentQuestions) {
   return Boolean(signature) && recentQuestions.some((recentQuestion) => createQuestionSignature(recentQuestion) === signature);
 }
 
+function prepareQuestionForPlay(question) {
+  if (!question) {
+    return null;
+  }
+
+  return {
+    ...question,
+    options: prepareQuestionOptions(question),
+    selectedOption: null,
+  };
+}
+
+function prepareQuestionOptions(question) {
+  const answer = String(question?.answer || "").trim();
+  const rawOptions = Array.isArray(question?.options) ? question.options : [];
+  const options = [];
+
+  for (const option of [answer, ...rawOptions, ...getGenericDistractors(answer)]) {
+    const cleanOption = String(option || "").trim().slice(0, 90);
+    if (!cleanOption) {
+      continue;
+    }
+
+    if (options.some((existing) => normalizeLooseText(existing) === normalizeLooseText(cleanOption))) {
+      continue;
+    }
+
+    options.push(cleanOption);
+    if (options.length >= SOLO_OPTION_COUNT) {
+      break;
+    }
+  }
+
+  return shuffleOptions(options, answer);
+}
+
+function getGenericDistractors(answer) {
+  const pool = [
+    "Brasil",
+    "Portugal",
+    "França",
+    "Estados Unidos",
+    "Inglaterra",
+    "Espanha",
+    "Itália",
+    "Alemanha",
+    "Argentina",
+    "China",
+    "Japão",
+    "Paris",
+    "Londres",
+    "Roma",
+    "Madri",
+    "Rio de Janeiro",
+    "São Paulo",
+    "Ouro",
+    "Prata",
+    "Oxigênio",
+    "Carbono",
+    "DNA",
+    "Coração",
+    "Newton",
+    "Einstein",
+    "Machado de Assis",
+    "Leonardo da Vinci",
+    "1994",
+    "2002",
+    "1969",
+    "1889",
+  ];
+
+  return pool.filter((item) => normalizeLooseText(item) !== normalizeLooseText(answer));
+}
+
+function shuffleOptions(options, answer) {
+  const shuffled = [...options];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+
+  if (!shuffled.some((option) => normalizeLooseText(option) === normalizeLooseText(answer))) {
+    shuffled[0] = answer;
+  }
+
+  return shuffled.slice(0, SOLO_OPTION_COUNT);
+}
+
+function isSoloAnswerCorrect() {
+  return normalizeLooseText(state.currentQuestion?.selectedOption) === normalizeLooseText(state.currentQuestion?.answer);
+}
+
 function createQuestionSignature(value) {
   return String(value || "")
     .normalize("NFD")
@@ -569,6 +803,16 @@ function createQuestionSignature(value) {
     .split(/\s+/)
     .filter(Boolean)
     .join(" ");
+}
+
+function normalizeLooseText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function syncCustomThemeInput() {
@@ -605,7 +849,8 @@ function render() {
 function renderSetup() {
   const selectedTheme = getSelectedTheme() || "Escolha um tema";
   const selectedDifficulty = state.difficulty ? formatDifficulty(state.difficulty) : "Escolha o nível";
-  const canStart = state.players.length >= 2 && Boolean(getSelectedTheme());
+  const canStart = state.players.length >= 1 && Boolean(getSelectedTheme());
+  const startLabel = state.players.length === 1 ? "Começar desafio solo" : "Começar jogo";
 
   return `
     <section class="screen">
@@ -624,8 +869,8 @@ function renderSetup() {
         </div>
         <h1 class="hero-title">Último<br />Sobrevivente</h1>
         <p class="hero-copy">
-          Um jogador segura o celular, lê a pergunta em voz alta e elimina quem errar.
-          A rodada gira até restar só um.
+          Jogue em grupo no modo eliminação ou sozinho em um desafio de múltipla escolha.
+          Escolha o tema, responda e tente sobreviver até o fim.
         </p>
       </section>
 
@@ -675,7 +920,7 @@ function renderSetup() {
                 )
                 .join("")}</div>`
             : `<div class="empty-state">
-                <p class="empty-copy">Adicione pelo menos dois nomes para liberar o início da partida.</p>
+                <p class="empty-copy">Adicione um nome para jogar sozinho ou vários nomes para jogar em grupo.</p>
               </div>`
         }
       </section>
@@ -724,16 +969,16 @@ function renderSetup() {
           </div>
           <ol class="rule-list">
             <li class="rule-item">
-              <strong>1. O anfitrião lê a pergunta.</strong>
-              <span>Cada vez vai para um jogador diferente.</span>
+              <strong>1. Um jogador já libera o modo solo.</strong>
+              <span>Com 1 nome, você responde perguntas com 5 opções e 3 vidas.</span>
             </li>
             <li class="rule-item">
-              <strong>2. Revele a resposta quando quiser.</strong>
-              <span>Se o jogador errar, ele sai da partida na hora.</span>
+              <strong>2. Com dois ou mais, vale eliminação.</strong>
+              <span>O anfitrião lê a pergunta e marca se o jogador acertou ou errou.</span>
             </li>
             <li class="rule-item">
-              <strong>3. O ciclo continua até sobrar um.</strong>
-              <span>Quem restar por último vence.</span>
+              <strong>3. O jogo segue no ritmo escolhido.</strong>
+              <span>No solo, busque a maior pontuação. No grupo, vence quem sobrar.</span>
             </li>
           </ol>
         </div>
@@ -755,7 +1000,7 @@ function renderSetup() {
           data-action="start-game"
           ${canStart && state.difficulty ? "" : "disabled"}
         >
-          Começar jogo
+          ${startLabel}
         </button>
         ${
           state.players.length || state.customTheme || state.selectedTheme || state.difficulty
@@ -779,26 +1024,41 @@ function renderSetup() {
 
 function renderGame() {
   const currentPlayer = state.activePlayers[state.currentPlayerIndex];
+  const solo = isSoloMode();
   const activeQuestionSource = state.currentQuestion?.source === "fallback"
     ? "Pergunta reserva"
     : state.currentQuestion?.source === "cache"
       ? "Pergunta pronta"
       : "Pergunta da vez";
+  const questionLabel = solo ? "Desafio solo" : activeQuestionSource;
 
   return `
     <section class="screen">
       <section class="hero-card">
-        <div class="eyebrow">Partida em andamento</div>
+        <div class="eyebrow">${solo ? "Modo solo" : "Partida em andamento"}</div>
         <div class="split-head">
           <div>
             <h1 class="hero-title">${escapeHtml(getSelectedTheme() || "Tema livre")}</h1>
-            <p class="hero-copy">Nível ${escapeHtml(formatDifficulty(state.difficulty))}. O anfitrião só precisa seguir o fluxo abaixo.</p>
+            <p class="hero-copy">
+              ${solo
+                ? `Nível ${escapeHtml(formatDifficulty(state.difficulty))}. Escolha uma das 5 alternativas e tente fazer a maior sequência.`
+                : `Nível ${escapeHtml(formatDifficulty(state.difficulty))}. O anfitrião só precisa seguir o fluxo abaixo.`}
+            </p>
           </div>
         </div>
         <div class="meta-row">
-          <span class="meta-pill meta-pill--primary">Rodada ${state.round}</span>
-          <span class="meta-pill">${state.activePlayers.length} vivos</span>
-          <span class="meta-pill meta-pill--accent">${state.eliminatedPlayers.length} eliminados</span>
+          <span class="meta-pill meta-pill--primary">${solo ? `Pergunta ${state.round}` : `Rodada ${state.round}`}</span>
+          ${
+            solo
+              ? `
+                <span class="meta-pill">${state.soloScore} ponto(s)</span>
+                <span class="meta-pill meta-pill--accent">${state.soloLives} vida(s)</span>
+              `
+              : `
+                <span class="meta-pill">${state.activePlayers.length} vivos</span>
+                <span class="meta-pill meta-pill--accent">${state.eliminatedPlayers.length} eliminados</span>
+              `
+          }
         </div>
       </section>
 
@@ -807,22 +1067,26 @@ function renderGame() {
       <section class="status-grid">
         <article class="status-card">
           <strong>${state.round}</strong>
-          <span>Rodada atual</span>
+          <span>${solo ? "Pergunta atual" : "Rodada atual"}</span>
         </article>
         <article class="status-card">
-          <strong>${state.activePlayers.length}</strong>
-          <span>Jogadores vivos</span>
+          <strong>${solo ? state.soloScore : state.activePlayers.length}</strong>
+          <span>${solo ? "Pontos" : "Jogadores vivos"}</span>
         </article>
         <article class="status-card">
-          <strong>${state.eliminatedPlayers.length}</strong>
-          <span>Já saíram</span>
+          <strong>${solo ? state.soloLives : state.eliminatedPlayers.length}</strong>
+          <span>${solo ? "Vidas" : "Já saíram"}</span>
         </article>
       </section>
 
       <section class="question-card">
-        <div class="question-label">${escapeHtml(activeQuestionSource)}</div>
+        <div class="question-label">${escapeHtml(questionLabel)}</div>
         <h2 class="question-player">${escapeHtml(currentPlayer?.name || "Jogador")}</h2>
-        <p class="question-turn-copy">Quem segura o celular lê em voz alta. Depois marque se a resposta estava certa ou errada.</p>
+        <p class="question-turn-copy">
+          ${solo
+            ? "Escolha uma alternativa. Se errar, perde uma vida; com 3 erros, o desafio termina."
+            : "Quem segura o celular lê em voz alta. Depois marque se a resposta estava certa ou errada."}
+        </p>
         ${
           state.loadingQuestion
             ? `
@@ -840,6 +1104,7 @@ function renderGame() {
                   <span class="meta-pill meta-pill--gold">${escapeHtml(formatDifficulty(state.currentQuestion.difficulty))}</span>
                   <span class="meta-pill">${escapeHtml(state.currentQuestion.theme)}</span>
                 </div>
+                ${solo ? renderSoloOptions() : ""}
                 ${
                   state.currentQuestion.hint
                     ? `
@@ -861,20 +1126,34 @@ function renderGame() {
                     : ""
                 }
                 ${
-                  state.revealAnswer
+                  solo
+                    ? ""
+                    : state.revealAnswer
+                      ? `
+                        <div class="answer-panel">
+                          <strong>Resposta</strong>
+                          <p class="answer-copy">${escapeHtml(state.currentQuestion.answer)}</p>
+                          <strong style="margin-top: 12px;">Explicação</strong>
+                          <p class="answer-copy">${escapeHtml(state.currentQuestion.explanation)}</p>
+                        </div>
+                      `
+                      : `
+                        <div class="answer-locked">
+                          <p>A resposta fica escondida até você tocar em “Mostrar resposta”.</p>
+                        </div>
+                      `
+                }
+                ${
+                  solo && state.revealAnswer
                     ? `
                       <div class="answer-panel">
-                        <strong>Resposta</strong>
+                        <strong>${isSoloAnswerCorrect() ? "Resposta certa" : "Resposta correta"}</strong>
                         <p class="answer-copy">${escapeHtml(state.currentQuestion.answer)}</p>
                         <strong style="margin-top: 12px;">Explicação</strong>
                         <p class="answer-copy">${escapeHtml(state.currentQuestion.explanation)}</p>
                       </div>
                     `
-                    : `
-                      <div class="answer-locked">
-                        <p>A resposta fica escondida até você tocar em “Mostrar resposta”.</p>
-                      </div>
-                    `
+                    : ""
                 }
               `
               : `
@@ -900,6 +1179,18 @@ function renderGame() {
         ${
           state.loadingQuestion
             ? ""
+            : solo && state.currentQuestion && state.soloAnswered && state.soloLives > 0
+              ? `
+                <button type="button" class="button button-primary button-large" data-action="solo-next-question">
+                  Próxima pergunta
+                </button>
+              `
+            : solo && state.currentQuestion
+              ? `
+                <button type="button" class="button button-secondary" data-action="swap-question">
+                  Trocar pergunta
+                </button>
+              `
             : state.currentQuestion && !state.revealAnswer
               ? `
                 <button type="button" class="button button-primary button-large" data-action="show-answer">
@@ -929,27 +1220,7 @@ function renderGame() {
         }
       </div>
 
-      <section class="order-card">
-        <div class="section-head">
-          <h2 class="section-title">Ordem da rodada</h2>
-          <span class="section-note">${escapeHtml(currentPlayer?.name || "-")}</span>
-        </div>
-        <div class="order-list">
-          ${state.activePlayers
-            .map(
-              (player, index) => `
-                <div class="order-item ${index === state.currentPlayerIndex ? "is-current" : ""}">
-                  <div>
-                    <strong>${escapeHtml(player.name)}</strong>
-                    <span>${index === state.currentPlayerIndex ? "Respondendo agora" : "Na fila"}</span>
-                  </div>
-                  <span class="turn-chip">${index + 1}</span>
-                </div>
-              `
-            )
-            .join("")}
-        </div>
-      </section>
+      ${solo ? renderSoloProgressCard() : renderOrderCard(currentPlayer)}
 
       <section class="timeline-card">
         <div class="section-head">
@@ -985,6 +1256,105 @@ function renderGame() {
 
       ${renderMatchControls("Ajustes da partida")}
       ${renderFooterLinks()}
+    </section>
+  `;
+}
+
+function renderSoloOptions() {
+  const question = state.currentQuestion;
+  const options = Array.isArray(question?.options) ? question.options.slice(0, SOLO_OPTION_COUNT) : [];
+
+  if (!options.length) {
+    return "";
+  }
+
+  return `
+    <div class="option-grid" role="list" aria-label="Alternativas">
+      ${options
+        .map((option, index) => {
+          const selected = question.selectedOption === option;
+          const answered = Boolean(state.soloAnswered);
+          const correct = normalizeLooseText(option) === normalizeLooseText(question.answer);
+          const optionClass = answered && correct
+            ? "is-correct"
+            : answered && selected
+              ? "is-wrong"
+              : "";
+
+          return `
+            <button
+              type="button"
+              class="option-button ${optionClass}"
+              data-action="select-solo-option"
+              data-option="${escapeAttribute(option)}"
+              ${answered ? "disabled" : ""}
+            >
+              <span>${String.fromCharCode(65 + index)}</span>
+              <strong>${escapeHtml(option)}</strong>
+            </button>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
+function renderSoloProgressCard() {
+  return `
+    <section class="order-card">
+      <div class="section-head">
+        <h2 class="section-title">Progresso solo</h2>
+        <span class="section-note">${state.soloLives} vida(s)</span>
+      </div>
+      <div class="summary-list">
+        <div class="summary-item">
+          <div>
+            <strong>Pontuação</strong>
+            <span>Perguntas respondidas corretamente</span>
+          </div>
+          <strong>${state.soloScore}</strong>
+        </div>
+        <div class="summary-item">
+          <div>
+            <strong>Sequência atual</strong>
+            <span>Acertos seguidos</span>
+          </div>
+          <strong>${state.soloStreak}</strong>
+        </div>
+        <div class="summary-item">
+          <div>
+            <strong>Melhor sequência</strong>
+            <span>Seu melhor ritmo nesta partida</span>
+          </div>
+          <strong>${state.soloBestStreak}</strong>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderOrderCard(currentPlayer) {
+  return `
+    <section class="order-card">
+      <div class="section-head">
+        <h2 class="section-title">Ordem da rodada</h2>
+        <span class="section-note">${escapeHtml(currentPlayer?.name || "-")}</span>
+      </div>
+      <div class="order-list">
+        ${state.activePlayers
+          .map(
+            (player, index) => `
+              <div class="order-item ${index === state.currentPlayerIndex ? "is-current" : ""}">
+                <div>
+                  <strong>${escapeHtml(player.name)}</strong>
+                  <span>${index === state.currentPlayerIndex ? "Respondendo agora" : "Na fila"}</span>
+                </div>
+                <span class="turn-chip">${index + 1}</span>
+              </div>
+            `
+          )
+          .join("")}
+      </div>
     </section>
   `;
 }
@@ -1039,6 +1409,10 @@ function renderTurnFeedback() {
 }
 
 function renderFinished() {
+  if (isSoloMode()) {
+    return renderSoloFinished();
+  }
+
   return `
     <section class="screen winner-grid">
       <section class="winner-card">
@@ -1122,6 +1496,93 @@ function renderFinished() {
       <div class="winner-actions">
         <button type="button" class="button button-primary button-large" data-action="play-again">
           Reiniciar com mesmos jogadores
+        </button>
+        <button type="button" class="button button-secondary" data-action="share-result">
+          Compartilhar resultado
+        </button>
+        <button type="button" class="button button-ghost" data-action="restart-all">
+          Reiniciar geral
+        </button>
+      </div>
+
+      ${renderFooterLinks()}
+    </section>
+  `;
+}
+
+function renderSoloFinished() {
+  const playerName = state.activePlayers[0]?.name || state.players[0]?.name || "Jogador";
+
+  return `
+    <section class="screen winner-grid">
+      <section class="winner-card">
+        <div class="winner-badge">Desafio solo</div>
+        <h1 class="winner-name">${escapeHtml(playerName)}</h1>
+        <p class="winner-copy">
+          O desafio terminou com ${state.soloScore} ponto(s) em ${state.round} pergunta(s).
+        </p>
+        <div class="winner-meta">
+          <span class="meta-pill meta-pill--gold">${escapeHtml(getSelectedTheme() || "Tema livre")}</span>
+          <span class="meta-pill">${escapeHtml(formatDifficulty(state.difficulty))}</span>
+          <span class="meta-pill meta-pill--accent">${state.soloMistakes} erro(s)</span>
+        </div>
+      </section>
+
+      ${renderRuntimeAlerts()}
+
+      <section class="section-card">
+        <div class="section-head">
+          <h2 class="section-title">Resumo final</h2>
+        </div>
+        <ul class="summary-list">
+          <li class="summary-item">
+            <div>
+              <strong>Pontuação</strong>
+              <span>Acertos no desafio</span>
+            </div>
+            <strong>${state.soloScore}</strong>
+          </li>
+          <li class="summary-item">
+            <div>
+              <strong>Perguntas</strong>
+              <span>Total enfrentado</span>
+            </div>
+            <strong>${state.round}</strong>
+          </li>
+          <li class="summary-item">
+            <div>
+              <strong>Melhor sequência</strong>
+              <span>Acertos seguidos</span>
+            </div>
+            <strong>${state.soloBestStreak}</strong>
+          </li>
+        </ul>
+      </section>
+
+      <section class="timeline-card">
+        <div class="section-head">
+          <h2 class="section-title">Histórico</h2>
+          <span class="section-note">${state.timeline.length} eventos</span>
+        </div>
+        ${
+          state.timeline.length
+            ? `<div class="timeline-list">${state.timeline
+                .map(
+                  (item) => `
+                    <div class="timeline-item">
+                      <strong>${escapeHtml(item.title)}</strong>
+                      <span>${escapeHtml(item.copy)}</span>
+                    </div>
+                  `
+                )
+                .join("")}</div>`
+            : `<div class="empty-state"><p class="empty-copy">Nenhum evento registrado.</p></div>`
+        }
+      </section>
+
+      <div class="winner-actions">
+        <button type="button" class="button button-primary button-large" data-action="play-again">
+          Jogar solo novamente
         </button>
         <button type="button" class="button button-secondary" data-action="share-result">
           Compartilhar resultado
@@ -1262,6 +1723,7 @@ function loadState() {
     flashMessage: null,
     isOnline: window.navigator.onLine !== false,
     loadingQuestion: false,
+    mode: "group",
     processingTurn: false,
     players: [],
     recentQuestions: [],
@@ -1269,6 +1731,12 @@ function loadState() {
     round: 1,
     selectedTheme: EMPTY_SELECTION,
     showHint: false,
+    soloAnswered: false,
+    soloBestStreak: 0,
+    soloLives: SOLO_LIVES,
+    soloMistakes: 0,
+    soloScore: 0,
+    soloStreak: 0,
     status: "setup",
     turnFeedback: null,
     timeline: [],
@@ -1303,6 +1771,12 @@ function loadState() {
       revealAnswer: false,
       round: 1,
       showHint: false,
+      soloAnswered: false,
+      soloBestStreak: 0,
+      soloLives: SOLO_LIVES,
+      soloMistakes: 0,
+      soloScore: 0,
+      soloStreak: 0,
       status: "setup",
       turnFeedback: null,
       timeline: [],
@@ -1401,6 +1875,17 @@ async function shareApp() {
 }
 
 async function shareResult() {
+  if (isSoloMode()) {
+    const playerName = state.activePlayers[0]?.name || state.players[0]?.name || "Jogador";
+    const text = `${playerName} fez ${state.soloScore} ponto(s) no Desafio Solo do Último Sobrevivente em ${getSelectedTheme() || "tema livre"} no nível ${formatDifficulty(state.difficulty)}. Teste aqui: ${APP_PUBLIC_URL}`;
+    await shareText({
+      text,
+      title: "Resultado do Desafio Solo",
+      trackName: "compartilhamento_resultado",
+    });
+    return;
+  }
+
   const winnerName = state.winner?.name || "Um campeão";
   const text = `${winnerName} venceu no Último Sobrevivente após ${state.round} rodada(s) em ${getSelectedTheme() || "tema livre"} no nível ${formatDifficulty(state.difficulty)}. Teste aqui: ${APP_PUBLIC_URL}`;
   await shareText({

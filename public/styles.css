@@ -782,6 +782,60 @@ button {
   text-wrap: pretty;
 }
 
+.option-grid {
+  display: grid;
+  gap: 9px;
+  margin-top: 16px;
+}
+
+.option-button {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  min-height: 50px;
+  padding: 10px 12px;
+  border: 1px solid rgba(24, 35, 50, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.84);
+  color: var(--text);
+  text-align: left;
+}
+
+.option-button span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: rgba(13, 124, 134, 0.12);
+  color: var(--primary-strong);
+  font-weight: 900;
+}
+
+.option-button strong {
+  overflow-wrap: anywhere;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.option-button.is-correct {
+  border-color: rgba(13, 124, 134, 0.45);
+  background: rgba(13, 124, 134, 0.13);
+}
+
+.option-button.is-wrong {
+  border-color: rgba(242, 106, 75, 0.45);
+  background: rgba(242, 106, 75, 0.12);
+}
+
+.option-button:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
 .turn-card__label {
   display: inline-flex;
   align-items: center;
