@@ -716,9 +716,10 @@ function prepareQuestionForPlay(question) {
 function prepareQuestionOptions(question) {
   const answer = String(question?.answer || "").trim();
   const rawOptions = Array.isArray(question?.options) ? question.options : [];
+  const theme = String(question?.theme || getSelectedTheme() || "Tema livre").trim();
   const options = [];
 
-  for (const option of [answer, ...rawOptions, ...getGenericDistractors(answer)]) {
+  for (const option of [answer, ...rawOptions, ...getGenericDistractors(answer, theme)]) {
     const cleanOption = String(option || "").trim().slice(0, 90);
     if (!cleanOption) {
       continue;
@@ -737,41 +738,8 @@ function prepareQuestionOptions(question) {
   return shuffleOptions(options, answer);
 }
 
-function getGenericDistractors(answer) {
-  const pool = [
-    "Brasil",
-    "Portugal",
-    "França",
-    "Estados Unidos",
-    "Inglaterra",
-    "Espanha",
-    "Itália",
-    "Alemanha",
-    "Argentina",
-    "China",
-    "Japão",
-    "Paris",
-    "Londres",
-    "Roma",
-    "Madri",
-    "Rio de Janeiro",
-    "São Paulo",
-    "Ouro",
-    "Prata",
-    "Oxigênio",
-    "Carbono",
-    "DNA",
-    "Coração",
-    "Newton",
-    "Einstein",
-    "Machado de Assis",
-    "Leonardo da Vinci",
-    "1994",
-    "2002",
-    "1969",
-    "1889",
-  ];
-
+function getGenericDistractors(answer, theme) {
+  const pool = THEME_OPTION_DISTRACTORS[theme] || THEME_OPTION_DISTRACTORS["Tema livre"];
   return pool.filter((item) => normalizeLooseText(item) !== normalizeLooseText(answer));
 }
 
@@ -814,6 +782,34 @@ function normalizeLooseText(value) {
     .replace(/\s+/g, " ")
     .trim();
 }
+
+const THEME_OPTION_DISTRACTORS = {
+  Futebol: ["Argentina", "Alemanha", "França", "Flamengo", "Palmeiras", "Corinthians", "Cruzeiro", "1962", "1970", "1994"],
+  "História": ["Tratado de Tordesilhas", "Revolução Francesa", "1822", "1889", "1945", "Império Romano", "Napoleão Bonaparte"],
+  "Física": ["Joule", "Watt", "Volt", "Ampere", "Massa", "Energia cinética", "Albert Einstein", "Niels Bohr"],
+  "Geografia": ["África", "Europa", "América do Sul", "Oceano Pacífico", "Rio Amazonas", "Deserto do Saara", "Cordilheira dos Andes"],
+  "Matemática": ["3,15", "3,16", "2,14", "3,10", "64", "72", "Hexágono", "Octógono", "Dodecágono"],
+  "Direito": ["Constituição Federal", "Habeas corpus", "Código Penal", "Princípio da igualdade", "Senado Federal", "Tribunal de Justiça"],
+  "Biologia": ["Pulmão", "Rim", "RNA", "Mitose", "Fotossíntese", "Clorofila", "Neurônio", "Hemoglobina"],
+  "Química": ["Hélio", "Nitrogênio", "Hidrogênio", "Ferro", "Prata", "Carbono", "Tabela periódica", "Molécula"],
+  "Literatura": ["José de Alencar", "Clarice Lispector", "Carlos Drummond de Andrade", "Romance", "Soneto", "Fernando Pessoa"],
+  "Tecnologia": ["HTML", "HTTP", "RAM", "GPU", "Banco de dados", "Algoritmo", "Bluetooth", "Wi-Fi"],
+  "Cinema": ["Steven Spielberg", "Oscar", "Cannes", "O Poderoso Chefão", "Cidade de Deus", "Martin Scorsese", "Animação"],
+  "Música": ["Violão", "Samba", "Baião", "Ritmo", "Melodia", "Tom Jobim", "Chico Buarque", "Caetano Veloso"],
+  Games: ["Nintendo", "Sony", "Microsoft", "NPC", "RPG", "Plataforma", "Zelda", "Mario"],
+  "Astronomia": ["Vênus", "Júpiter", "Saturno", "Sol", "Lua", "Galáxia de Andrômeda", "Hubble", "Telescópio"],
+  "Política": ["Presidencialismo", "República", "Congresso Nacional", "Senado", "Câmara dos Deputados", "Monarquia", "Constituição"],
+  "Artes": ["Michelangelo", "Pablo Picasso", "Monalisa", "Óleo sobre tela", "Escultura", "Cubismo", "Impressionismo"],
+  "Idiomas": ["Espanhol", "Inglês", "Árabe", "Hindi", "Alfabeto latino", "Kanji", "Francês", "Alemão"],
+  "Culinária": ["Azeite", "Arroz", "Fermento", "Molho de soja", "Braseado", "Assado", "Cozimento", "Sal"],
+  "Economia": ["Real", "Euro", "Juros", "Deflação", "Câmbio", "Receita", "Lucro", "Mercado"],
+  "Medicina": ["Neurologista", "Diabetes", "Pressão arterial", "Raio-X", "Vacina", "Antibiótico", "Diagnóstico", "Pulso"],
+  "Mitologia": ["Zeus", "Odin", "Afrodite", "Hades", "Poseidon", "Loki", "Atena", "Hermes"],
+  "Empreendedorismo": ["Receita", "Fluxo de caixa", "Pitch", "Startup", "Investidor-anjo", "Prototipagem", "Escala", "Cliente"],
+  "Séries": ["Breaking Bad", "Friends", "The Crown", "Netflix", "HBO", "Episódio piloto", "Temporada", "Roteiro"],
+  "Tema livre": ["Paris", "Mercúrio", "Ouro", "Brasil", "DNA", "Newton", "Machado de Assis", "1994"],
+  "Outro tema": ["Paris", "Mercúrio", "Ouro", "Brasil", "DNA", "Newton", "Machado de Assis", "1994"],
+};
 
 function syncCustomThemeInput() {
   const customThemeInput = document.querySelector("#custom-theme-input");
